@@ -8,16 +8,16 @@ WORKDIR /app
 COPY package.json yarn.lock ./
 
 # Instala as dependências
-RUN npm install
+RUN yarn install
 
 # Copia o restante do código da aplicação
 COPY . .
 
 # Compila a aplicação
-RUN npm run build
+RUN yarn build
 
 # Expõe a porta que o NestJS usará
-EXPOSE 3000
+EXPOSE 4000
 
 # Define o comando padrão para iniciar a aplicação
 CMD ["npm", "run", "start:prod:migrate"]
