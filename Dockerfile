@@ -5,7 +5,7 @@ FROM node:18-alpine
 WORKDIR /app
 
 # Copia os arquivos de configuração
-COPY package.json package-lock.json ./
+COPY package.json yarn.lock ./
 
 # Instala as dependências
 RUN npm install
