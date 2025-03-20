@@ -13,6 +13,8 @@ RUN yarn install
 # Copia o restante do código da aplicação
 COPY . .
 
+RUN yarn prisma generate
+
 # Compila a aplicação
 RUN yarn build
 
