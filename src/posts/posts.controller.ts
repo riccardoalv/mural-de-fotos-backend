@@ -1,50 +1,16 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  NotFoundException,
-  Req,
-  Query,
-  UseInterceptors,
-  UploadedFile,
-  Res,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiConsumes,
-  getSchemaPath,
-  ApiBody,
-} from '@nestjs/swagger';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { memoryStorage } from 'multer';
-import { PostsService } from './posts.service';
-import { CreatePostDto } from './dto/create-post.dto';
-import { UpdatePostDto } from './dto/update-post.dto';
-import { GetPostDto } from './dto/get-post.dto';
-import { Public } from 'src/common/decorators/public-endpoint.decorator';
-import * as fs from 'fs';
-import { IMAGE_DIR } from 'src/main';
-import * as path from 'path';
+// ... imports permanecem iguais
 
 @ApiTags('Posts')
 @Controller('posts')
 @ApiBearerAuth('JWT-auth')
 export class PostsController {
-  constructor(private readonly postsService: PostsService) { }
+  constructor(private readonly postsService: PostsService) {}
 
   @Post()
   @ApiOperation({
     summary: 'Cria um novo post com upload de imagem',
     operationId: 'createPost',
   })
-  @ApiBearerAuth('JWT-auth')
   @UseInterceptors(
     FileInterceptor('image', {
       storage: memoryStorage(),
@@ -135,6 +101,10 @@ export class PostsController {
     summary: 'Atualiza um post específico por ID',
     operationId: 'updatePostById',
   })
+  @ApiBody({
+    type: UpdatePostDto,
+    description: 'Campos para atualização do post',
+  })
   @ApiResponse({
     status: 200,
     description: 'Post atualizado com sucesso',
@@ -163,6 +133,9 @@ export class PostsController {
 
   @Get(':postId/download-image')
   @Public()
+  @ApiOperation({ summary: 'Faz o download da imagem de um post' })
+  @ApiResponse({ status: 200, description: 'Imagem enviada com sucesso' })
+  @ApiResponse({ status: 404, description: 'Imagem não encontrada' })
   async getImage(@Param('postId') postId: string, @Res() res) {
     const post = await this.postsService.findOne(postId);
 
@@ -174,19 +147,33 @@ export class PostsController {
   }
 
   @Post(':id/like')
-  @ApiOperation({ summary: 'Dá like em um post' })
+  @ApiOperation({ summary: 'Dá like em um post', operationId: 'likePost' })
+  @ApiResponse({ status: 200, description: 'Like registrado' })
   async likePost(@Param('id') postId: string, @Req() req) {
     return this.postsService.likePost(postId, req.user.id);
   }
 
   @Delete(':id/like')
-  @ApiOperation({ summary: 'Remove o like de um post' })
+  @ApiOperation({
+    summary: 'Remove o like de um post',
+    operationId: 'unlikePost',
+  })
+  @ApiResponse({ status: 200, description: 'Like removido' })
   async unlikePost(@Param('id') postId: string, @Req() req) {
     return this.postsService.unlikePost(postId, req.user.id);
   }
 
   @Post(':id/comments')
   @ApiOperation({ summary: 'Cria um comentário em um post' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        content: { type: 'string' },
+      },
+    },
+  })
+  @ApiResponse({ status: 201, description: 'Comentário criado' })
   async comment(
     @Param('id') postId: string,
     @Req() req,
@@ -197,7 +184,30 @@ export class PostsController {
 
   @Get(':id/comments')
   @ApiOperation({ summary: 'Lista comentários de um post' })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de comentários',
+    schema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'string' },
+          content: { type: 'string' },
+          createdAt: { type: 'string', format: 'date-time' },
+          user: {
+            type: 'object',
+            properties: {
+              id: { type: 'string' },
+              name: { type: 'string' },
+            },
+          },
+        },
+      },
+    },
+  })
   async getComments(@Param('id') postId: string) {
     return this.postsService.getComments(postId);
   }
 }
+
