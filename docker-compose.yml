@@ -14,7 +14,7 @@ services:
     ports:
       - '4000:4000'
     volumes:
-      - images:/app/images
+      - ./images:/app/images
 
   database:
     image: postgres:15
@@ -31,4 +31,3 @@ services:
 
 volumes:
   pgdata:
-  images:
