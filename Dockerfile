@@ -22,5 +22,5 @@ RUN yarn build
 EXPOSE 4000
 
 # Define o comando padrão para iniciar a aplicação
-CMD ["npm", "run", "start:prod:migrate"]
+CMD ["yarn", "start:prod:migrate"]
 
