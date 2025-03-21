@@ -57,6 +57,25 @@ export class PostsService {
   async findOne(id: string) {
     const post = await this.prisma.post.findUnique({
       where: { id },
+      include: {
+        comments: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                avatarUrl: true,
+                name: true,
+              },
+            },
+          },
+        },
+        _count: {
+          select: {
+            likes: true,
+            comments: true,
+          },
+        },
+      },
     });
     if (!post) {
       throw new NotFoundException('Post não encontrado');
@@ -77,10 +96,18 @@ export class PostsService {
           ...(!isLogged ? { public: true } : {}),
         },
         include: {
+          likes: true,
           user: {
-            omit: {
-              password: true,
-              cpf: true,
+            select: {
+              id: true,
+              avatarUrl: true,
+              name: true,
+            },
+          },
+          _count: {
+            select: {
+              likes: true,
+              comments: true,
             },
           },
         },
