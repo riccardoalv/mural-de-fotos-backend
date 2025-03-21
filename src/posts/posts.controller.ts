@@ -1,4 +1,3 @@
-// src/posts/posts.controller.ts
 import {
   Controller,
   Get,
@@ -14,6 +13,7 @@ import {
   UploadedFile,
   UploadedFiles,
   BadRequestException,
+  Res,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -30,6 +30,8 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { GetPostDto } from './dto/get-post.dto';
 import { Public } from 'src/common/decorators/public-endpoint.decorator';
+import { join } from 'path';
+import * as fs from 'fs';
 
 @ApiTags('Posts')
 @Controller('posts')
@@ -229,5 +231,43 @@ export class PostsController {
   @ApiResponse({ status: 404, description: 'Post não encontrado' })
   async remove(@Param('id') id: string) {
     return this.postsService.removePost(id);
+  }
+
+  @Get(':filename')
+  @Public()
+  async getImage(@Param('filename') filename: string, @Res() res) {
+    const filePath = join(__dirname, '..', '..', 'images', filename);
+    if (!fs.existsSync(filePath)) {
+      throw new NotFoundException('Imagem não encontrada');
+    }
+    res.sendFile(filePath);
+  }
+
+  @Post(':id/like')
+  @ApiOperation({ summary: 'Dá like em um post' })
+  async likePost(@Param('id') postId: string, @Req() req) {
+    return this.postsService.likePost(postId, req.user.id);
+  }
+
+  @Delete(':id/like')
+  @ApiOperation({ summary: 'Remove o like de um post' })
+  async unlikePost(@Param('id') postId: string, @Req() req) {
+    return this.postsService.unlikePost(postId, req.user.id);
+  }
+
+  @Post(':id/comments')
+  @ApiOperation({ summary: 'Cria um comentário em um post' })
+  async comment(
+    @Param('id') postId: string,
+    @Req() req,
+    @Body('content') content: string,
+  ) {
+    return this.postsService.createComment(postId, req.user.id, content);
+  }
+
+  @Get(':id/comments')
+  @ApiOperation({ summary: 'Lista comentários de um post' })
+  async getComments(@Param('id') postId: string) {
+    return this.postsService.getComments(postId);
   }
 }

@@ -43,6 +43,14 @@ export class PostsService {
         where: {
           ...(!isLogged ? { public: true } : {}),
         },
+        include: {
+          user: {
+            omit: {
+              password: true,
+              cpf: true,
+            },
+          },
+        },
         orderBy: {
           createdAt: 'desc',
         },
@@ -67,5 +75,37 @@ export class PostsService {
       where: { id },
     });
     return post;
+  }
+
+  async likePost(postId: string, userId: string) {
+    return this.prisma.like.upsert({
+      where: {
+        userId_postId: { userId, postId },
+      },
+      update: {},
+      create: { userId, postId },
+    });
+  }
+
+  async unlikePost(postId: string, userId: string) {
+    return this.prisma.like.delete({
+      where: {
+        userId_postId: { userId, postId },
+      },
+    });
+  }
+
+  async createComment(postId: string, userId: string, content: string) {
+    return this.prisma.comment.create({
+      data: { content, postId, userId },
+    });
+  }
+
+  async getComments(postId: string) {
+    return this.prisma.comment.findMany({
+      where: { postId },
+      include: { user: { select: { id: true, name: true, avatarUrl: true } } },
+      orderBy: { createdAt: 'desc' },
+    });
   }
 }
