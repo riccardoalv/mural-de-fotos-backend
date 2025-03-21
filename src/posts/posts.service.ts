@@ -169,4 +169,14 @@ export class PostsService {
       orderBy: { createdAt: 'desc' },
     });
   }
+
+  async liked(postId: string, userId: string) {
+    const like = await this.prisma.like.findUnique({
+      where: {
+        userId_postId: { userId, postId },
+      },
+    });
+
+    return like ? true : false;
+  }
 }

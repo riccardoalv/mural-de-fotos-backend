@@ -236,4 +236,10 @@ export class PostsController {
   async getComments(@Param('id') postId: string) {
     return this.postsService.getComments(postId);
   }
+
+  @Get(':postId/liked')
+  @ApiOperation({ summary: 'Verifica se o usuario deu like' })
+  async liked(@Param('postId') postId: string, @Req() req) {
+    return this.postsService.liked(postId, req.user.id);
+  }
 }
