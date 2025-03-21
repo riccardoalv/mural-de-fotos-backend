@@ -177,6 +177,6 @@ export class PostsService {
       },
     });
 
-    return like ? true : false;
+    return like;
   }
 }
