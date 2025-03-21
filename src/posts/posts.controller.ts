@@ -78,6 +78,7 @@ export class PostsController {
     return this.postsService.createPost(req.user.id, createPostDto, file);
   }
 
+  @Public
   @Get(':id')
   @ApiOperation({
     summary: 'Retorna um post específico por ID',
