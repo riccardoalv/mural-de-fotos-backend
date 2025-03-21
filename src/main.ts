@@ -7,7 +7,8 @@ import { ZodFilter } from './common/filters/zod-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {});
-  app.enableCors();
+  app.setGlobalPrefix(process.env.ROUTE || '');
+  // app.enableCors();
   app.useGlobalFilters(new ZodFilter());
   app.useGlobalFilters(new PrismaExceptionFilters());
 

@@ -12,10 +12,7 @@ services:
     environment:
       DATABASE_URL: postgresql://postgres:postgres@database:5432/nestdb
     ports:
-      - '4000:3000'
-    volumes:
-      - .:/app
-      - /app/node_modules
+      - '4000:4000'
 
   database:
     image: postgres:15
