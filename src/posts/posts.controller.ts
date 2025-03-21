@@ -30,8 +30,8 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { GetPostDto } from './dto/get-post.dto';
 import { Public } from 'src/common/decorators/public-endpoint.decorator';
-import { join } from 'path';
 import * as fs from 'fs';
+import { IMAGE_DIR } from 'src/main';
 
 @ApiTags('Posts')
 @Controller('posts')
@@ -45,7 +45,11 @@ export class PostsController {
     operationId: 'createPost',
   })
   @ApiBearerAuth('JWT-auth')
-  @UseInterceptors(FileInterceptor('image', { dest: './images' }))
+  @UseInterceptors(
+    FileInterceptor('image', {
+      dest: IMAGE_DIR,
+    }),
+  )
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     description: 'Dados para criação do post',
@@ -72,7 +76,7 @@ export class PostsController {
     if (!file) {
       throw new BadRequestException('Send a valid file');
     }
-    createPostDto.imageUrl = `./images/${file.filename}`;
+    createPostDto.imageUrl = `${IMAGE_DIR}/${file.filename}`;
     return this.postsService.createPost(req.user.id, createPostDto);
   }
 
@@ -82,7 +86,7 @@ export class PostsController {
     operationId: 'createMultiplePosts',
   })
   @ApiBearerAuth('JWT-auth')
-  @UseInterceptors(FilesInterceptor('images', 10, { dest: './images' }))
+  @UseInterceptors(FilesInterceptor('images', 10, { dest: IMAGE_DIR }))
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     description:
@@ -138,7 +142,7 @@ export class PostsController {
 
     const createdPosts: GetPostDto[] = [];
     for (let i = 0; i < files.length; i++) {
-      postsData[i].imageUrl = `./images/${files[i].filename}`;
+      postsData[i].imageUrl = `./${IMAGE_DIR}/${files[i].filename}`;
       const createdPost = await this.postsService.createPost(
         req.user.id,
         postsData[i],
@@ -236,11 +240,10 @@ export class PostsController {
   @Get(':filename')
   @Public()
   async getImage(@Param('filename') filename: string, @Res() res) {
-    const filePath = join(__dirname, '..', '..', 'images', filename);
-    if (!fs.existsSync(filePath)) {
+    if (!fs.existsSync(IMAGE_DIR)) {
       throw new NotFoundException('Imagem não encontrada');
     }
-    res.sendFile(filePath);
+    res.sendFile(IMAGE_DIR);
   }
 
   @Post(':id/like')

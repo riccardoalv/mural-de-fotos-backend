@@ -13,6 +13,8 @@ services:
       DATABASE_URL: postgresql://postgres:postgres@database:5432/nestdb
     ports:
       - '4000:4000'
+    volumes:
+      - images:/app/images
 
   database:
     image: postgres:15
@@ -29,3 +31,4 @@ services:
 
 volumes:
   pgdata:
+  images:
