@@ -16,7 +16,7 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule, {});
   app.setGlobalPrefix(process.env.ROUTE || '');
-  // app.enableCors();
+  app.enableCors();
   app.useGlobalFilters(new ZodFilter());
   app.useGlobalFilters(new PrismaExceptionFilters());
 
