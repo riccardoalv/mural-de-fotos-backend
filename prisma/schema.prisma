@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -32,7 +32,7 @@ model Post {
   updatedAt DateTime @updatedAt
 
   userId    String
-  user      User @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   comments  Comment[]
   likes     Like[]
@@ -45,10 +45,10 @@ model Comment {
   updatedAt DateTime @updatedAt
 
   userId    String
-  user      User @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   postId    String
-  post      Post @relation(fields: [postId], references: [id])
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 }
 
 model Like {
@@ -57,10 +57,11 @@ model Like {
   updatedAt DateTime @updatedAt
 
   userId    String
-  user      User @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   postId    String
-  post      Post @relation(fields: [postId], references: [id])
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@unique([userId, postId], name: "userId_postId")
 }
+
