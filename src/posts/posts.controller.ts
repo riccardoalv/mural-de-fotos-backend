@@ -21,6 +21,7 @@ import {
   ApiConsumes,
   getSchemaPath,
   ApiBody,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
@@ -30,6 +31,10 @@ import { UpdatePostDto } from './dto/update-post.dto';
 import { GetPostDto } from './dto/get-post.dto';
 import { Public } from 'src/common/decorators/public-endpoint.decorator';
 import * as fs from 'fs';
+import {
+  PaginationQueryDto,
+  PaginationQuerySchema,
+} from 'src/common/dtos/pagination.dto';
 
 @ApiTags('Posts')
 @Controller('posts')
@@ -99,30 +104,20 @@ export class PostsController {
       'Lista todos os posts com paginação (filtra entre autenticados e não autenticados)',
     operationId: 'listAllPosts',
   })
-  @ApiResponse({
-    status: 200,
-    description: 'Lista paginada de posts',
-    schema: {
-      type: 'object',
-      properties: {
-        items: {
-          type: 'array',
-          items: { $ref: getSchemaPath(GetPostDto) },
-        },
-        meta: {
-          type: 'object',
-          properties: {
-            totalItems: { type: 'number' },
-            itemCount: { type: 'number' },
-            itemsPerPage: { type: 'number' },
-            totalPages: { type: 'number' },
-            currentPage: { type: 'number' },
-          },
-        },
-      },
-    },
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number for pagination',
   })
-  async findAll(@Req() req, @Query() query: any) {
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Number of items per page',
+  })
+  async findAll(@Req() req, @Query() rawQuery: any) {
+    const query: PaginationQueryDto = PaginationQuerySchema.parse(rawQuery);
     const isLogged = !!req.user;
     return this.postsService.findAll(query, isLogged);
   }
