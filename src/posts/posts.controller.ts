@@ -175,13 +175,16 @@ export class PostsController {
     return this.postsService.removePost(id);
   }
 
-  @Get(':filename')
+  @Get(':postId')
   @Public()
-  async getImage(@Param('filename') filename: string, @Res() res) {
-    if (!fs.existsSync(IMAGE_DIR)) {
+  async getImage(@Param('postId') postId: string, @Res() res) {
+    const post = await this.postsService.findOne(postId);
+
+    if (!fs.existsSync(post.imageUrl)) {
       throw new NotFoundException('Imagem não encontrada');
     }
-    res.sendFile(IMAGE_DIR);
+
+    res.sendFile(post.imageUrl);
   }
 
   @Post(':id/like')
