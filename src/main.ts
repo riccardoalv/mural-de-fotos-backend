@@ -7,7 +7,7 @@ import { ZodFilter } from './common/filters/zod-exception.filter';
 import { existsSync, mkdirSync } from 'fs';
 import { join } from 'path';
 
-export const IMAGE_DIR = join(__dirname, '..', 'images');
+export const IMAGE_DIR = join(__dirname, '..', '..', 'images');
 
 async function bootstrap() {
   if (!existsSync(IMAGE_DIR)) {
