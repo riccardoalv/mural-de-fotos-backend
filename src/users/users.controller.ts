@@ -15,6 +15,7 @@ import {
   ApiResponse,
   ApiTags,
   ApiBearerAuth,
+  ApiParam,
 } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -54,6 +55,7 @@ export class UsersController {
     description: 'User data',
     type: GetUserDto,
   })
+  @ApiParam({ name: 'id', description: 'User identifier' })
   @ApiResponse({ status: 404, description: 'User not found' })
   async findOne(@Param() id: string) {
     const user = await this.usersService.findOne(id);
