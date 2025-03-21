@@ -11,8 +11,6 @@ import {
   Query,
   UseInterceptors,
   UploadedFile,
-  UploadedFiles,
-  BadRequestException,
   Res,
 } from '@nestjs/common';
 import {
@@ -24,7 +22,8 @@ import {
   getSchemaPath,
   ApiBody,
 } from '@nestjs/swagger';
-import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
@@ -32,7 +31,7 @@ import { GetPostDto } from './dto/get-post.dto';
 import { Public } from 'src/common/decorators/public-endpoint.decorator';
 import * as fs from 'fs';
 import { IMAGE_DIR } from 'src/main';
-import { diskStorage } from 'multer';
+import * as path from 'path';
 
 @ApiTags('Posts')
 @Controller('posts')
@@ -48,16 +47,7 @@ export class PostsController {
   @ApiBearerAuth('JWT-auth')
   @UseInterceptors(
     FileInterceptor('image', {
-      storage: diskStorage({
-        destination: IMAGE_DIR,
-        filename: (req, file, callback) => {
-          const uniqueSuffix =
-            Date.now() + '-' + Math.round(Math.random() * 1e9);
-          const fileExtension = file.originalname.split('.').pop();
-          const filename = `${uniqueSuffix}.${fileExtension}`;
-          callback(null, filename);
-        },
-      }),
+      storage: memoryStorage(),
     }),
   )
   @ApiConsumes('multipart/form-data')
@@ -83,11 +73,7 @@ export class PostsController {
     @UploadedFile() file: Express.Multer.File,
     @Body() createPostDto: CreatePostDto,
   ) {
-    if (!file) {
-      throw new BadRequestException('Send a valid file');
-    }
-    createPostDto.imageUrl = `${IMAGE_DIR}/${file.filename}`;
-    return this.postsService.createPost(req.user.id, createPostDto);
+    return this.postsService.createPost(req.user.id, createPostDto, file);
   }
 
   @Get(':id')
