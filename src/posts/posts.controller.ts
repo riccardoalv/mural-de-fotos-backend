@@ -1,10 +1,41 @@
-// ... imports permanecem iguais
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  NotFoundException,
+  Req,
+  Query,
+  UseInterceptors,
+  UploadedFile,
+  Res,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiConsumes,
+  getSchemaPath,
+  ApiBody,
+} from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
+import { PostsService } from './posts.service';
+import { CreatePostDto } from './dto/create-post.dto';
+import { UpdatePostDto } from './dto/update-post.dto';
+import { GetPostDto } from './dto/get-post.dto';
+import { Public } from 'src/common/decorators/public-endpoint.decorator';
+import * as fs from 'fs';
 
 @ApiTags('Posts')
 @Controller('posts')
 @ApiBearerAuth('JWT-auth')
 export class PostsController {
-  constructor(private readonly postsService: PostsService) {}
+  constructor(private readonly postsService: PostsService) { }
 
   @Post()
   @ApiOperation({
@@ -210,4 +241,3 @@ export class PostsController {
     return this.postsService.getComments(postId);
   }
 }
-
