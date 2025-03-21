@@ -175,7 +175,7 @@ export class PostsController {
     return this.postsService.removePost(id);
   }
 
-  @Get(':postId')
+  @Get(':postId/download-image')
   @Public()
   async getImage(@Param('postId') postId: string, @Res() res) {
     const post = await this.postsService.findOne(postId);
