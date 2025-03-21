@@ -16,7 +16,7 @@ export const UserSchema = z.object({
     .max(11)
     .refine(isValidCPF, { message: 'Invalid CPF' })
     .describe('User CPF'),
-  bio: z.string(),
+  bio: z.string().optional(),
 
   createdAt: z.string().datetime().optional().describe('Date of Creation'),
   updatedAt: z.string().datetime().optional().describe('Date of Update'),
