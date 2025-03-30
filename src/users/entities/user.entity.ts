@@ -4,6 +4,7 @@ import { isValidCPF } from 'src/shareds/helpers/isValidCpf';
 export const UserSchema = z.object({
   id: z.string().uuid().describe('User ID'),
   email: z.string().email().describe('User Email'),
+  avatarUrl: z.string().url().optional(),
   name: z
     .string({
       required_error: 'Name is required',
