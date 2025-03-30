@@ -14,11 +14,6 @@ export class EmailListener {
   }) {
     const { comment } = payload;
 
-    await this.emailService.sendCommentNotification({
-      to: 'destinatario@exemplo.com',
-      subject: 'Novo comentário criado',
-      html: `<p>Um novo comentário foi criado:</p>
-             <p>${comment.content}</p>`,
-    });
+    await this.emailService.sendCommentNotification(comment);
   }
 }
