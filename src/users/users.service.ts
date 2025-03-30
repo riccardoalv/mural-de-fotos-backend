@@ -54,8 +54,16 @@ export class UsersService {
         bio: true,
         createdAt: true,
         updatedAt: true,
-        comments: true,
-        likes: true,
+        comments: {
+          include: {
+            post: true,
+          },
+        },
+        likes: {
+          include: {
+            post: true,
+          },
+        },
       },
     });
 
