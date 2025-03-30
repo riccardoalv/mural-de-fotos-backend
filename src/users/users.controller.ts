@@ -59,7 +59,7 @@ export class UsersController {
   })
   @ApiParam({ name: 'id', description: 'User identifier' })
   @ApiResponse({ status: 404, description: 'User not found' })
-  findOne(@Param() id: string) {
+  findOne(@Param('id') id: string) {
     return this.usersService.findOne(id);
   }
 
