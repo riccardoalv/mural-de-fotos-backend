@@ -69,6 +69,9 @@ export const emailTemplate = `
         width: 100%;
         display: block;
       }
+      .post-counts {
+        padding: 0 20px;
+      }
       .comment-box {
         padding: 15px 20px;
       }
@@ -124,11 +127,14 @@ export const emailTemplate = `
       
       <!-- Imagem do post -->
       <div class="post-content">
-        <% if (comment.post.imageUrl) { %>
-          <img src="http://computacao.unir.br/mural/api/posts/<%= comment.post.id %>/download-image" alt="Imagem do post">
-        <% } else { %>
-          <p style="padding: 20px; text-align: center;">Sem imagem no post</p>
-        <% } %>
+        <img src="http://computacao.unir.br/mural/api/posts/<%= comment.post.id %>/download-image" alt="Imagem do post">
+      </div>
+      
+      <!-- Contadores do Post -->
+      <div class="post-counts">
+        <p style="font-size: 14px; color: #8e8e8e;">
+          Curtidas: <%= comment.post._count.likes %> | Comentários: <%= comment.post._count.comments %>
+        </p>
       </div>
       
       <!-- Comentário -->
