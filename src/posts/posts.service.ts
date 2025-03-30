@@ -11,10 +11,14 @@ import { Prisma, Post } from '@prisma/client';
 import { IMAGE_DIR } from 'src/main';
 import { promises as fs } from 'fs';
 import * as path from 'path';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class PostsService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(
+    private readonly prisma: PrismaService,
+    private eventEmitter: EventEmitter2,
+  ) { }
 
   async createPost(
     userId: string,
@@ -170,9 +174,25 @@ export class PostsService {
   }
 
   async createComment(postId: string, userId: string, content: string) {
-    return this.prisma.comment.create({
+    const comment = await this.prisma.comment.create({
       data: { content, postId, userId },
+      include: {
+        post: {
+          include: {
+            user: {
+              omit: {
+                cpf: true,
+                password: true,
+              },
+            },
+          },
+        },
+      },
     });
+
+    this.eventEmitter.emit('comment.created', { comment, postId, userId });
+
+    return comment;
   }
 
   async getComments(postId: string) {

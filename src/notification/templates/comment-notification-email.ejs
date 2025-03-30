@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Novo Comentário no Seu Post</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f6f6f6;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        max-width: 600px;
+        margin: 30px auto;
+        background-color: #ffffff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      }
+      .header {
+        text-align: center;
+        border-bottom: 1px solid #eeeeee;
+        padding-bottom: 10px;
+      }
+      .header h1 {
+        font-size: 24px;
+        margin: 0;
+        color: #333;
+      }
+      .post-preview {
+        margin-top: 20px;
+        text-align: center;
+      }
+      .post-preview img {
+        max-width: 100%;
+        border-radius: 8px;
+      }
+      .comment-content {
+        background-color: #f1f1f1;
+        border-left: 4px solid #007BFF;
+        padding: 15px;
+        margin: 20px 0;
+        font-style: italic;
+      }
+      .footer {
+        text-align: center;
+        font-size: 12px;
+        color: #888;
+        border-top: 1px solid #eeeeee;
+        padding-top: 10px;
+      }
+      .btn {
+        display: inline-block;
+        margin-top: 15px;
+        padding: 10px 20px;
+        background-color: #007BFF;
+        color: #fff;
+        text-decoration: none;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>Olá <%= comment.post.user.name %>,</h1>
+        <p>Você tem um novo comentário em seu post!</p>
+      </div>
+
+      <div class="post-preview">
+        <% if (comment.post) { %>
+          <img src="http://computacao.unir.br/mural/api/posts/<%= comment.post.id %>/download-image" alt="Imagem do post">
+        <% } else { %>
+          <p>Sem imagem no post</p>
+        <% } %>
+      </div>
+
+      <div class="comment-content">
+        <p><%= comment.content %></p>
+      </div>
+
+      <div style="text-align: center;">
+        <a class="btn" href="http://seudominio.com/posts/<%= comment.post.id %>">
+          Visualizar Post
+        </a>
+      </div>
+
+      <div class="footer">
+        <p>Este email foi enviado automaticamente. Não responda.</p>
+        <p>Sua Equipe © <%= new Date().getFullYear() %></p>
+      </div>
+    </div>
+  </body>
+</html>
+
