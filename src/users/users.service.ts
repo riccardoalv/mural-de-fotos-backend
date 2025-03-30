@@ -61,7 +61,7 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    const [totalLikes, totalComments] = await Promise.all([
+    const [totalLikes, totalComments, totalPosts] = await Promise.all([
       this.prisma.like.count({
         where: {
           post: {
@@ -76,12 +76,18 @@ export class UsersService {
           },
         },
       }),
+      this.prisma.post.count({
+        where: {
+          userId: id,
+        },
+      }),
     ]);
 
     return {
       ...user,
       totalLikes,
       totalComments,
+      totalPosts,
     };
   }
 
