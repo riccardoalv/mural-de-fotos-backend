@@ -1,25 +1,4 @@
 export const emailTemplate = `
-<%-
-  /*
-    Estrutura esperada do objeto 'comment':
-    comment: {
-      content: string,
-      post: {
-        id: string,
-        imageUrl: string,
-        user: {
-          name: string,
-          avatarUrl?: string, // opcional
-          email: string
-        },
-        _count: {
-          likes: number,
-          comments: number
-        }
-      }
-    }
-  */
--%>
 <!DOCTYPE html>
 <html>
   <head>
@@ -164,7 +143,7 @@ export const emailTemplate = `
       
       <!-- Call-to-Action -->
       <div class="cta">
-        <a class="btn" href="http://computacao.unir.br/posts/<%= comment.post.id %>">Visualizar Post</a>
+        <a class="btn" href="http://computacao.unir.br/mural/?post=<%= comment.post.id %>">Visualizar Post</a>
       </div>
       
       <!-- Rodapé -->
