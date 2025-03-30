@@ -19,7 +19,6 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiConsumes,
-  getSchemaPath,
   ApiBody,
   ApiQuery,
 } from '@nestjs/swagger';
@@ -31,6 +30,10 @@ import { UpdatePostDto } from './dto/update-post.dto';
 import { GetPostDto } from './dto/get-post.dto';
 import { Public } from 'src/common/decorators/public-endpoint.decorator';
 import * as fs from 'fs';
+import {
+  PaginationQueryDto,
+  PaginationQuerySchema,
+} from 'src/common/dtos/pagination.dto';
 
 @ApiTags('Posts')
 @Controller('posts')
@@ -98,48 +101,23 @@ export class PostsController {
   @Public()
   @ApiOperation({
     summary:
-      'Lista todos os posts com paginação e filtros (autenticado ou não)',
+      'Lista todos os posts com paginação (filtra entre autenticados e não autenticados)',
     operationId: 'listAllPosts',
   })
   @ApiQuery({
     name: 'page',
     required: false,
     type: Number,
-    description: 'Número da página',
+    description: 'Page number for pagination',
   })
   @ApiQuery({
     name: 'limit',
     required: false,
     type: Number,
-    description: 'Limite por página',
-  })
-  @ApiQuery({
-    name: 'userId',
-    required: false,
-    type: String,
-    description: 'Filtrar por ID do usuário',
-  })
-  @ApiQuery({
-    name: 'orderBy',
-    required: false,
-    enum: ['createdAt', 'likes', 'comments'],
-    description: 'Campo de ordenação',
-  })
-  @ApiQuery({
-    name: 'order',
-    required: false,
-    enum: ['asc', 'desc'],
-    description: 'Direção da ordenação',
+    description: 'Number of items per page',
   })
   async findAll(@Req() req, @Query() rawQuery: any) {
-    const query: any = {
-      page: Number(rawQuery.page) || 1,
-      limit: Number(rawQuery.limit) || 10,
-      userId: rawQuery.userId || undefined,
-      orderBy: rawQuery.orderBy || 'createdAt',
-      order: rawQuery.order || 'desc',
-    };
-
+    const query: PaginationQueryDto = PaginationQuerySchema.parse(rawQuery);
     const isLogged = !!req.user;
     return this.postsService.findAll(query, isLogged);
   }

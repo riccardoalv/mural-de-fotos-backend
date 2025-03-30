@@ -9,6 +9,7 @@ import { CreateUserSchema } from './dto/create-user.dto';
 import { UpdateUserSchema } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from 'src/databases/prisma/prisma.service';
+import { createPaginator } from 'prisma-pagination';
 
 @Injectable()
 export class UsersService {
@@ -56,6 +57,30 @@ export class UsersService {
     }
 
     return user;
+  }
+
+  async findAll(query: any) {
+    const {
+      page = 1,
+      limit = 10,
+      orderBy = 'createdAt',
+      order = 'desc',
+    } = query;
+
+    const paginate = createPaginator({ page, perPage: limit });
+
+    const orderByClause = { [orderBy]: order };
+
+    const queryResult = await paginate<any, any>(this.prisma.user, {
+      select: {
+        id: true,
+        name: true,
+        email: true,
+      },
+      orderBy: orderByClause,
+    });
+
+    return queryResult;
   }
 
   async findByEmail(email: string) {
