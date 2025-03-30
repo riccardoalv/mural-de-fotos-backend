@@ -185,6 +185,12 @@ export class PostsService {
                 password: true,
               },
             },
+            _count: {
+              select: {
+                likes: true,
+                comments: true,
+              },
+            },
           },
         },
       },
