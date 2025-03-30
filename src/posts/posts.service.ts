@@ -25,32 +25,34 @@ export class PostsService {
       throw new BadRequestException('Envie um arquivo válido');
     }
 
-    if (!file.mimetype.startsWith('image/')) {
+    const isImage = file.mimetype.startsWith('image/');
+    const isVideo = file.mimetype.startsWith('video/');
+
+    if (!isImage && !isVideo) {
       throw new BadRequestException(
-        'O arquivo enviado não é uma imagem válida',
+        'O arquivo enviado deve ser uma imagem ou vídeo válido',
       );
     }
 
-    // Gera um nome único para o arquivo e define o caminho de salvamento
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
     const fileExtension = file.originalname.split('.').pop();
     const filename = `${uniqueSuffix}.${fileExtension}`;
-    const filePath = path.join(IMAGE_DIR, filename);
+    const directory = IMAGE_DIR;
+    const filePath = path.join(directory, filename);
 
-    // Salva o arquivo no disco somente se ele for válido
     await fs.writeFile(filePath, file.buffer);
 
-    // Atualiza o DTO com a URL da imagem (ou o caminho relativo, conforme o caso)
-    createPostDto.imageUrl = `${IMAGE_DIR}/${filename}`;
+    createPostDto.imageUrl = `${directory}/${filename}`;
 
-    // Valida os dados do post e cria-o no banco de dados
     const parsed = CreatePostSchema.parse(createPostDto);
     const post = await this.prisma.post.create({
       data: {
         ...parsed,
         userId,
+        isVideo,
       },
     });
+
     return post;
   }
 
