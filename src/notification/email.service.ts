@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import * as ejs from 'ejs';
-import { join } from 'path';
 import { Resend } from 'resend';
+import { emailTemplate } from './templates/comment-notification-email.template';
 
 @Injectable()
 export class EmailService {
@@ -12,13 +12,7 @@ export class EmailService {
   }
 
   async sendCommentNotification(comment: any) {
-    const templatePath = join(
-      __dirname,
-      'templates',
-      'comment-notification-email.ejs',
-    );
-
-    const html = await ejs.renderFile(templatePath, { comment });
+    const html = await ejs.render(emailTemplate, { comment });
 
     return this.resend.emails.send({
       from: 'noreply@mural.earthdoor.cc',
