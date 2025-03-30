@@ -85,15 +85,28 @@ export class PostsService {
   }
 
   async findAll(query: any, isLogged: boolean) {
-    const paginate = createPaginator({
-      page: query.page,
-      perPage: query.limit,
-    });
+    const {
+      page,
+      limit,
+      userId,
+      orderBy = 'createdAt',
+      order = 'desc',
+    } = query;
+
+    const paginate = createPaginator({ page, perPage: limit });
+
+    const orderByClause =
+      orderBy === 'likes'
+        ? { likes: { _count: order } }
+        : orderBy === 'comments'
+          ? { comments: { _count: order } }
+          : { [orderBy]: order };
 
     const queryResult = await paginate<Post[], Prisma.PostFindManyArgs>(
       this.prisma.post,
       {
         where: {
+          ...(userId ? { userId } : {}),
           ...(!isLogged ? { public: true } : {}),
         },
         include: {
@@ -112,9 +125,7 @@ export class PostsService {
             },
           },
         },
-        orderBy: {
-          createdAt: 'desc',
-        },
+        orderBy: orderByClause,
       },
     );
 

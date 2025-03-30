@@ -57,14 +57,8 @@ export class UsersController {
   })
   @ApiParam({ name: 'id', description: 'User identifier' })
   @ApiResponse({ status: 404, description: 'User not found' })
-  async findOne(@Param() id: string) {
-    const user = await this.usersService.findOne(id);
-
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
-
-    return user;
+  findOne(@Param() id: string) {
+    return this.usersService.findOne(id);
   }
 
   @Patch('me')
