@@ -199,7 +199,7 @@ export class PostsService {
     return this.prisma.comment.findMany({
       where: { postId },
       include: { user: { select: { id: true, name: true, avatarUrl: true } } },
-      orderBy: { createdAt: 'desc' },
+      orderBy: { createdAt: 'asc' },
     });
   }
 
