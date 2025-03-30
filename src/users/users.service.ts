@@ -54,6 +54,8 @@ export class UsersService {
         bio: true,
         createdAt: true,
         updatedAt: true,
+        comments: true,
+        likes: true,
       },
     });
 
