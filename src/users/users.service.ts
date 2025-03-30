@@ -46,9 +46,14 @@ export class UsersService {
   async findOne(id: string) {
     const user = await this.prisma.user.findUnique({
       where: { id },
-      omit: {
-        cpf: true,
-        password: true,
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        avatarUrl: true,
+        bio: true,
+        createdAt: true,
+        updatedAt: true,
       },
     });
 
@@ -56,7 +61,28 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    return user;
+    const [totalLikes, totalComments] = await Promise.all([
+      this.prisma.like.count({
+        where: {
+          post: {
+            userId: id,
+          },
+        },
+      }),
+      this.prisma.comment.count({
+        where: {
+          post: {
+            userId: id,
+          },
+        },
+      }),
+    ]);
+
+    return {
+      ...user,
+      totalLikes,
+      totalComments,
+    };
   }
 
   async findAll(query: any) {

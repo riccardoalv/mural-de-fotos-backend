@@ -48,6 +48,7 @@ export class UsersController {
   }
 
   @Get(':id')
+  @Public()
   @ApiOperation({
     summary: 'Retrieve a specific user by ID',
     operationId: 'getUserById',
