@@ -15,7 +15,7 @@ export class EmailService {
     const html = await ejs.render(emailTemplate, { comment });
 
     return this.resend.emails.send({
-      from: 'noreply@mural.earthdoor.cc',
+      from: 'Mural de Fotos <noreply@mural.earthdoor.cc>',
       to: comment.post.user.email,
       subject: 'Você tem um novo comentário no seu post!',
       html,
