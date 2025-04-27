@@ -27,9 +27,9 @@ export class EmailService {
   }
 
   async sendPasswordRecovery(email: string, resetPasswordCode: string) {
-    const recoveryUrl = `${process.env.FRONTEND_URL}/reset-password?code=${resetPasswordCode}`;
-
-    const html = await ejs.render(passwordRecoveryTemplate, { recoveryUrl });
+    const html = await ejs.render(passwordRecoveryTemplate, {
+      resetPasswordCode,
+    });
 
     return this.resend.emails.send({
       from: 'Mural de Fotos <noreply@mural.earthdoor.cc>',

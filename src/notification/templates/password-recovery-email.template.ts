@@ -40,16 +40,12 @@ export const passwordRecoveryTemplate = `
         padding: 20px;
         text-align: center;
       }
-      .btn {
-        text-decoration: none;
-        background-color: #3897f0;
-        color: #fff;
-        padding: 10px 20px;
-        border-radius: 4px;
+      .code {
+        font-size: 32px;
         font-weight: bold;
-        font-size: 14px;
-        display: inline-block;
+        letter-spacing: 4px;
         margin-top: 20px;
+        color: #3897f0;
       }
       .footer {
         background-color: #fafafa;
@@ -71,8 +67,8 @@ export const passwordRecoveryTemplate = `
 
       <!-- Conteúdo principal -->
       <div class="content">
-        <p>Para redefinir sua senha, clique no botão abaixo:</p>
-        <a class="btn" href="<%= recoveryUrl %>">Redefinir Senha</a>
+        <p>Use o código abaixo para redefinir sua senha:</p>
+        <div class="code"><%= resetPasswordCode %></div>
         <p style="margin-top: 20px; font-size: 14px; color: #8e8e8e;">
           Se você não solicitou esta recuperação, ignore este e-mail.
         </p>

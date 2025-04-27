@@ -140,8 +140,6 @@ export class UsersController {
     return this.usersService.remove(req.user.id);
   }
 
-  // NOVAS ROTAS
-
   @Post('recover-password')
   @Public()
   @ApiOperation({
@@ -168,6 +166,7 @@ export class UsersController {
   })
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     return this.usersService.resetPassword(
+      resetPasswordDto.email,
       resetPasswordDto.code,
       resetPasswordDto.newPassword,
     );

@@ -17,7 +17,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 export class PostsService {
   constructor(
     private readonly prisma: PrismaService,
-    private eventEmitter: EventEmitter2,
+    private readonly eventEmitter: EventEmitter2,
   ) { }
 
   async createPost(
@@ -55,6 +55,11 @@ export class PostsService {
         userId,
         isVideo,
       },
+    });
+
+    this.eventEmitter.emit('post.created', {
+      ...post,
+      caption: createPostDto.caption,
     });
 
     return post;
@@ -155,67 +160,60 @@ export class PostsService {
     return post;
   }
 
-  async likePost(postId: string, userId: string) {
-    return this.prisma.like.upsert({
-      where: {
-        userId_postId: { userId, postId },
+  async searchPosts(query: any, isLogged: boolean) {
+    const { term, page = 1, limit = 10 } = query;
+
+    if (!term?.trim())
+      return { data: [], meta: { total: 0, page, perPage: limit } };
+
+    const terms = term.toLowerCase().split(/\s+/).filter(Boolean);
+
+    if (terms.length === 0)
+      return { data: [], meta: { total: 0, page, perPage: limit } };
+
+    const whereClauses = Prisma.join(
+      terms.map((t) => Prisma.sql`LOWER(elem->>'label') LIKE ${'%' + t + '%'}`),
+      ' AND ',
+    );
+
+    const publicCondition = isLogged
+      ? Prisma.sql``
+      : Prisma.sql`AND p."public" = true`;
+
+    const offset = (page - 1) * limit;
+
+    const posts = await this.prisma.$queryRaw<any[]>(Prisma.sql`
+    SELECT p.*, 
+           MAX((elem->>'score')::float) AS relevance
+    FROM "Post" p,
+         jsonb_array_elements(p."tags") AS elem
+    WHERE ${whereClauses}
+    ${publicCondition}
+    GROUP BY p.id
+    ORDER BY relevance DESC
+    LIMIT ${limit}
+    OFFSET ${offset}
+  `);
+
+    const totalResult = await this.prisma.$queryRaw<
+      { count: number }[]
+    >(Prisma.sql`
+    SELECT COUNT(DISTINCT p.id) AS count
+    FROM "Post" p,
+         jsonb_array_elements(p."tags") AS elem
+    WHERE ${whereClauses}
+    ${publicCondition}
+  `);
+
+    const total = totalResult?.[0]?.count ?? 0;
+
+    return {
+      data: posts,
+      meta: {
+        total,
+        page,
+        perPage: limit,
       },
-      update: {},
-      create: { userId, postId },
-    });
-  }
-
-  async unlikePost(postId: string, userId: string) {
-    return this.prisma.like.delete({
-      where: {
-        userId_postId: { userId, postId },
-      },
-    });
-  }
-
-  async createComment(postId: string, userId: string, content: string) {
-    const comment = await this.prisma.comment.create({
-      data: { content, postId, userId },
-      include: {
-        post: {
-          include: {
-            user: {
-              omit: {
-                cpf: true,
-                password: true,
-              },
-            },
-            _count: {
-              select: {
-                likes: true,
-                comments: true,
-              },
-            },
-          },
-        },
-      },
-    });
-
-    this.eventEmitter.emit('comment.created', { comment, postId, userId });
-
-    return comment;
-  }
-
-  async getComments(postId: string) {
-    return this.prisma.comment.findMany({
-      where: { postId },
-      include: { user: { select: { id: true, name: true, avatarUrl: true } } },
-      orderBy: { createdAt: 'asc' },
-    });
-  }
-
-  async liked(postId: string, userId: string) {
-    const like = await this.prisma.like.findUnique({
-      where: {
-        userId_postId: { userId, postId },
-      },
-    });
-
-    return like;
+    };
   }
 }

@@ -2,6 +2,7 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -11,13 +12,13 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from 'src/databases/prisma/prisma.service';
 import { createPaginator } from 'prisma-pagination';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { randomBytes } from 'crypto';
+import { randomBytes, randomInt } from 'crypto';
 import * as dayjs from 'dayjs';
 
 @Injectable()
 export class UsersService {
   constructor(
-    private readonly prisma: PrismaService
+    private readonly prisma: PrismaService,
     private eventEmitter: EventEmitter2,
   ) { }
 
@@ -179,7 +180,7 @@ export class UsersService {
       return;
     }
 
-    const resetPasswordCode = randomBytes(32).toString('hex');
+    const resetPasswordCode = String(randomInt(100000, 999999));
     const resetPasswordCodeExpiry = dayjs().add(1, 'hour').toDate();
 
     await this.prisma.user.update({
@@ -190,15 +191,20 @@ export class UsersService {
       },
     });
 
-    this.eventEmitter.emit('password.reset', { email: user.email, resetPasswordCode });
+    this.eventEmitter.emit('password.reset', {
+      email: user.email,
+      resetPasswordCode,
+    });
 
     return;
   }
 
-  async resetPassword(code: string, newPassword: string) {
+  async resetPassword(email: string, code: string, newPassword: string) {
     const user = await this.prisma.user.findFirst({
-      where: { resetPasswordCode: code },
+      where: { email },
     });
+
+    if (user?.resetPasswordCode !== code) throw new UnauthorizedException();
 
     if (!user) {
       throw new NotFoundException('Invalid or expired reset code');

@@ -12,6 +12,7 @@ import {
   UseInterceptors,
   UploadedFile,
   Res,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -19,7 +20,6 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiConsumes,
-  getSchemaPath,
   ApiBody,
   ApiQuery,
 } from '@nestjs/swagger';
@@ -31,10 +31,7 @@ import { UpdatePostDto } from './dto/update-post.dto';
 import { GetPostDto } from './dto/get-post.dto';
 import { Public } from 'src/common/decorators/public-endpoint.decorator';
 import * as fs from 'fs';
-import {
-  PaginationQueryDto,
-  PaginationQuerySchema,
-} from 'src/common/dtos/pagination.dto';
+import { SearchPostsSchema } from './dto/search-posts.dto';
 
 @ApiTags('Posts')
 @Controller('posts')
@@ -105,11 +102,36 @@ export class PostsController {
       'Lista todos os posts com paginação e filtros (autenticado ou não)',
     operationId: 'listAllPosts',
   })
-  @ApiQuery({ name: 'page', required: false, type: Number, description: 'Número da página' })
-  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Limite por página' })
-  @ApiQuery({ name: 'userId', required: false, type: String, description: 'Filtrar por ID do usuário' })
-  @ApiQuery({ name: 'orderBy', required: false, enum: ['createdAt', 'likes', 'comments'], description: 'Campo de ordenação' })
-  @ApiQuery({ name: 'order', required: false, enum: ['asc', 'desc'], description: 'Direção da ordenação' })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Número da página',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Limite por página',
+  })
+  @ApiQuery({
+    name: 'userId',
+    required: false,
+    type: String,
+    description: 'Filtrar por ID do usuário',
+  })
+  @ApiQuery({
+    name: 'orderBy',
+    required: false,
+    enum: ['createdAt', 'likes', 'comments'],
+    description: 'Campo de ordenação',
+  })
+  @ApiQuery({
+    name: 'order',
+    required: false,
+    enum: ['asc', 'desc'],
+    description: 'Direção da ordenação',
+  })
   async findAll(@Req() req, @Query() rawQuery: any) {
     const query: any = {
       page: Number(rawQuery.page) || 1,
@@ -158,7 +180,7 @@ export class PostsController {
     return this.postsService.removePost(id);
   }
 
-  @Get(':postId/download-image')
+  @Get('download/:postId')
   @Public()
   @ApiOperation({ summary: 'Faz o download da imagem de um post' })
   @ApiResponse({ status: 200, description: 'Imagem enviada com sucesso' })
@@ -173,73 +195,37 @@ export class PostsController {
     res.sendFile(post.imageUrl);
   }
 
-  @Post(':id/like')
-  @ApiOperation({ summary: 'Dá like em um post', operationId: 'likePost' })
-  @ApiResponse({ status: 200, description: 'Like registrado' })
-  async likePost(@Param('id') postId: string, @Req() req) {
-    return this.postsService.likePost(postId, req.user.id);
-  }
-
-  @Delete(':id/like')
+  @Public()
+  @Get('search')
   @ApiOperation({
-    summary: 'Remove o like de um post',
-    operationId: 'unlikePost',
+    summary: 'Busca posts usando tags extraídas da imagem e do caption',
+    operationId: 'searchPostsByTags',
   })
-  @ApiResponse({ status: 200, description: 'Like removido' })
-  async unlikePost(@Param('id') postId: string, @Req() req) {
-    return this.postsService.unlikePost(postId, req.user.id);
-  }
-
-  @Post(':id/comments')
-  @ApiOperation({ summary: 'Cria um comentário em um post' })
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        content: { type: 'string' },
-      },
-    },
+  @ApiQuery({
+    name: 'term',
+    required: true,
+    type: String,
+    description: 'Termo de busca para procurar nos posts',
   })
-  @ApiResponse({ status: 201, description: 'Comentário criado' })
-  async comment(
-    @Param('id') postId: string,
-    @Req() req,
-    @Body('content') content: string,
-  ) {
-    return this.postsService.createComment(postId, req.user.id, content);
-  }
-
-  @Get(':id/comments')
-  @ApiOperation({ summary: 'Lista comentários de um post' })
-  @ApiResponse({
-    status: 200,
-    description: 'Lista de comentários',
-    schema: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          id: { type: 'string' },
-          content: { type: 'string' },
-          createdAt: { type: 'string', format: 'date-time' },
-          user: {
-            type: 'object',
-            properties: {
-              id: { type: 'string' },
-              name: { type: 'string' },
-            },
-          },
-        },
-      },
-    },
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Número da página (default 1)',
   })
-  async getComments(@Param('id') postId: string) {
-    return this.postsService.getComments(postId);
-  }
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Limite de resultados por página (default 10)',
+  })
+  async searchPosts(@Req() req, @Query() rawQuery: any) {
+    const parsed = SearchPostsSchema.safeParse(rawQuery);
+    if (!parsed.success) {
+      throw new BadRequestException(parsed.error.format());
+    }
 
-  @Get(':postId/liked')
-  @ApiOperation({ summary: 'Verifica se o usuario deu like' })
-  async liked(@Param('postId') postId: string, @Req() req) {
-    return this.postsService.liked(postId, req.user.id);
+    const isLogged = !!req.user;
+    return this.postsService.searchPosts(parsed.data, isLogged);
   }
 }

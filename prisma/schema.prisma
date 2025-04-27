@@ -24,6 +24,7 @@ model User {
   posts     Post[]
   comments  Comment[]
   likes     Like[]
+  faces     Face[]    // <<< novo: rostos reconhecidos desse usuário
 }
 
 model Post {
@@ -40,6 +41,39 @@ model Post {
 
   comments  Comment[]
   likes     Like[]
+
+  tags      Json?
+  faces     Face[]    // <<< novo: rostos detectados nesta imagem
+}
+
+model Face {
+  id         String   @id @default(uuid())
+  boundingBox Json    // <<< caixa delimitadora do rosto (x, y, width, height)
+  embedding   Json?   // <<< vetor de embedding do rosto (opcional, para reconhecimento automático)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  postId      String
+  post        Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  userId      String?  // <<< se a pessoa for um usuário registrado
+  user        User?    @relation(fields: [userId], references: [id])
+
+  personId    String?  // <<< se for apenas uma "Pessoa" conhecida mas não cadastrada
+  person      Person?  @relation(fields: [personId], references: [id])
+}
+
+model Person {
+  id          String   @id @default(uuid())
+  name        String   // Nome da pessoa (pode ser "desconhecido" ou "visitante" inicialmente)
+  description String?  // Alguma informação extra ("amigo do João", "professor", etc.)
+  avatarUrl   String?  // Foto de perfil da pessoa, se quiser ilustrar
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  faces       Face[]   // <<< rostos associados a esta pessoa
 }
 
 model Comment {
