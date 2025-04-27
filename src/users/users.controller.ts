@@ -25,6 +25,10 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { GetUserDto } from './dto/get-user.dto';
 import { Public } from 'src/common/decorators/public-endpoint.decorator';
 
+// Importa os novos DTOs
+import { RecoverPasswordDto } from './dto/recover-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+
 @ApiTags('Users')
 @Controller('users')
 @ApiBearerAuth('JWT-auth')
@@ -67,32 +71,32 @@ export class UsersController {
   @Get()
   @Public()
   @ApiOperation({
-    summary: 'Lista todos os usuários com paginação e filtros',
+    summary: 'List all users with pagination and filters',
     operationId: 'listAllUsers',
   })
   @ApiQuery({
     name: 'page',
     required: false,
     type: Number,
-    description: 'Número da página',
+    description: 'Page number',
   })
   @ApiQuery({
     name: 'limit',
     required: false,
     type: Number,
-    description: 'Limite por página',
+    description: 'Limit per page',
   })
   @ApiQuery({
     name: 'orderBy',
     required: false,
     enum: ['createdAt', 'name', 'email'],
-    description: 'Campo de ordenação',
+    description: 'Order field',
   })
   @ApiQuery({
     name: 'order',
     required: false,
     enum: ['asc', 'desc'],
-    description: 'Direção da ordenação',
+    description: 'Order direction',
   })
   async findAll(@Req() req, @Query() rawQuery: any) {
     const query: any = {
@@ -107,8 +111,8 @@ export class UsersController {
 
   @Patch('me')
   @ApiOperation({
-    summary: 'Update a specific user by ID',
-    operationId: 'updateUserById',
+    summary: 'Update the current logged user',
+    operationId: 'updateCurrentUser',
   })
   @ApiResponse({
     status: 200,
@@ -123,8 +127,8 @@ export class UsersController {
 
   @Delete('me')
   @ApiOperation({
-    summary: 'Delete a specific user by ID',
-    operationId: 'deleteUserById',
+    summary: 'Delete the current logged user',
+    operationId: 'deleteCurrentUser',
   })
   @ApiResponse({
     status: 200,
@@ -134,5 +138,38 @@ export class UsersController {
   @ApiResponse({ status: 404, description: 'User not found' })
   remove(@Req() req) {
     return this.usersService.remove(req.user.id);
+  }
+
+  // NOVAS ROTAS
+
+  @Post('recover-password')
+  @Public()
+  @ApiOperation({
+    summary: 'Request a password recovery',
+    operationId: 'recoverPassword',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Recovery e-mail sent if user exists',
+  })
+  async recoverPassword(@Body() recoverPasswordDto: RecoverPasswordDto) {
+    return this.usersService.recoverPassword(recoverPasswordDto.email);
+  }
+
+  @Post('reset-password')
+  @Public()
+  @ApiOperation({
+    summary: 'Reset password using recovery code',
+    operationId: 'resetPassword',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Password successfully reset',
+  })
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    return this.usersService.resetPassword(
+      resetPasswordDto.code,
+      resetPasswordDto.newPassword,
+    );
   }
 }

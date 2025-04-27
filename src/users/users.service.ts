@@ -10,10 +10,16 @@ import { UpdateUserSchema } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from 'src/databases/prisma/prisma.service';
 import { createPaginator } from 'prisma-pagination';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { randomBytes } from 'crypto';
+import * as dayjs from 'dayjs';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) { }
+  constructor(
+    private readonly prisma: PrismaService
+    private eventEmitter: EventEmitter2,
+  ) { }
 
   async createUser(createUserDto: CreateUserDto) {
     const parsedDto = CreateUserSchema.parse(createUserDto);
@@ -162,5 +168,60 @@ export class UsersService {
       where: { id },
     });
     return user;
+  }
+
+  async recoverPassword(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!user) {
+      return;
+    }
+
+    const resetPasswordCode = randomBytes(32).toString('hex');
+    const resetPasswordCodeExpiry = dayjs().add(1, 'hour').toDate();
+
+    await this.prisma.user.update({
+      where: { email },
+      data: {
+        resetPasswordCode,
+        resetPasswordCodeExpiry,
+      },
+    });
+
+    this.eventEmitter.emit('password.reset', { email: user.email, resetPasswordCode });
+
+    return;
+  }
+
+  async resetPassword(code: string, newPassword: string) {
+    const user = await this.prisma.user.findFirst({
+      where: { resetPasswordCode: code },
+    });
+
+    if (!user) {
+      throw new NotFoundException('Invalid or expired reset code');
+    }
+
+    if (
+      !user.resetPasswordCodeExpiry ||
+      user.resetPasswordCodeExpiry < new Date()
+    ) {
+      throw new ConflictException('Reset code expired');
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        resetPasswordCode: null,
+        resetPasswordCodeExpiry: null,
+      },
+    });
+
+    return;
   }
 }

@@ -34,12 +34,26 @@ export class EmailListener {
 
     const comments = post!.comments;
 
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: payload.userId,
+      },
+    });
+
     const users = comments.map((c) => c.user);
 
-    await this.emailService.sendCommentNotification(
-      comment,
-      post as Post,
-      users,
-    );
+    users.push(user!);
+
+    await this.emailService.sendCommentNotification(comment, post, users);
+  }
+
+  @OnEvent('password.reset')
+  async handlePasswordResetEvent(payload: {
+    email: string;
+    resetPasswordCode: string;
+  }) {
+    const { email, resetPasswordCode } = payload;
+
+    await this.emailService.sendPasswordRecovery(email, resetPasswordCode);
   }
 }
