@@ -8,17 +8,16 @@ import { CreatePostDto, CreatePostSchema } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { createPaginator } from 'prisma-pagination';
 import { Prisma, Post } from '@prisma/client';
-import { IMAGE_DIR } from 'src/main';
-import { promises as fs } from 'fs';
-import * as path from 'path';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { AwsUploadService } from 'src/aws/aws.service';
 
 @Injectable()
 export class PostsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly eventEmitter: EventEmitter2,
-  ) { }
+    private readonly aws: AwsUploadService,
+  ) {}
 
   async createPost(
     userId: string,
@@ -41,14 +40,20 @@ export class PostsService {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
     const fileExtension = file.originalname.split('.').pop();
     const filename = `${uniqueSuffix}.${fileExtension}`;
-    const directory = IMAGE_DIR;
-    const filePath = path.join(directory, filename);
 
-    await fs.writeFile(filePath, file.buffer);
+    const folder = isVideo ? 'posts/videos' : 'posts/images';
 
-    createPostDto.imageUrl = `${directory}/${filename}`;
+    const { url } = await this.aws.uploadFile({
+      buffer: file.buffer,
+      fileName: filename,
+      mimeType: file.mimetype,
+      folder,
+    });
+
+    createPostDto.imageUrl = url;
 
     const parsed = CreatePostSchema.parse(createPostDto);
+
     const post = await this.prisma.post.create({
       data: {
         ...parsed,

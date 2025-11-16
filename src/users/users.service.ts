@@ -12,7 +12,7 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from 'src/databases/prisma/prisma.service';
 import { createPaginator } from 'prisma-pagination';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { randomBytes, randomInt } from 'crypto';
+import { randomInt } from 'crypto';
 import * as dayjs from 'dayjs';
 
 @Injectable()
@@ -20,7 +20,7 @@ export class UsersService {
   constructor(
     private readonly prisma: PrismaService,
     private eventEmitter: EventEmitter2,
-  ) { }
+  ) {}
 
   async createUser(createUserDto: CreateUserDto) {
     const parsedDto = CreateUserSchema.parse(createUserDto);
