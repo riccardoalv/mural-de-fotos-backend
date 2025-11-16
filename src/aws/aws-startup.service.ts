@@ -48,7 +48,11 @@ export class AwsStartupMigrationService {
       try {
         if (!post.imageUrl) continue;
 
-        const absolutePath = path.resolve(post.imageUrl);
+        const relativePath = post.imageUrl.startsWith('/')
+          ? post.imageUrl.slice(1)
+          : post.imageUrl;
+
+        const absolutePath = path.resolve(relativePath);
 
         const buffer = await fs.readFile(absolutePath);
 
@@ -87,15 +91,8 @@ export class AwsStartupMigrationService {
       where: {
         avatarUrl: {
           not: null,
+          startsWith: 'http',
         },
-        AND: [
-          {
-            OR: [
-              { avatarUrl: { startsWith: '/' } },
-              { avatarUrl: { startsWith: LEGACY_IMAGE_DIR } },
-            ],
-          },
-        ],
       },
       select: {
         id: true,
@@ -118,17 +115,36 @@ export class AwsStartupMigrationService {
       try {
         if (!user.avatarUrl) continue;
 
-        const relativePath = user.avatarUrl.startsWith('/')
-          ? user.avatarUrl.slice(1)
-          : user.avatarUrl;
+        // Baixa a imagem a partir da URL (Node 18+ já tem fetch global)
+        const response = await fetch(user.avatarUrl);
 
-        const absolutePath = path.resolve(relativePath);
+        if (!response.ok) {
+          this.logger.error(
+            `Falha ao baixar avatar de ${user.id} (${user.avatarUrl}): HTTP ${response.status}`,
+          );
+          continue;
+        }
 
-        const buffer = await fs.readFile(absolutePath);
+        const arrayBuffer = await response.arrayBuffer();
+        const buffer = Buffer.from(arrayBuffer);
 
-        const mimeType = lookupMime(absolutePath) || 'image/jpeg';
+        // Tenta pegar o mime type do header ou inferir pelo nome do arquivo
+        const contentType = response.headers.get('content-type') ?? undefined;
+        const urlObj = new URL(user.avatarUrl);
+        const rawFileName = path.basename(urlObj.pathname) || user.id;
 
-        const fileName = path.basename(relativePath);
+        const mimeType = contentType || lookupMime(rawFileName) || 'image/jpeg';
+
+        let fileName = rawFileName;
+        const ext = path.extname(fileName);
+
+        if (!ext) {
+          // Se não tiver extensão, tenta derivar do mime (ex: image/png -> .png)
+          const mimeParts = String(mimeType).split('/');
+          const guessedExt = mimeParts.length === 2 ? mimeParts[1] : 'jpg';
+          fileName = `${fileName}.${guessedExt}`;
+        }
+
         const folder = 'avatars';
 
         const { url } = await this.awsUploadService.uploadFile({
