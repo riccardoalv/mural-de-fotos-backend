@@ -48,9 +48,7 @@ export class AwsStartupMigrationService {
       try {
         if (!post.imageUrl) continue;
 
-        const relativePath = post.imageUrl.startsWith('/')
-          ? post.imageUrl.slice(1)
-          : post.imageUrl;
+        const relativePath = post.imageUrl;
 
         const absolutePath = path.resolve(relativePath);
 
@@ -94,10 +92,6 @@ export class AwsStartupMigrationService {
           startsWith: 'http',
         },
       },
-      select: {
-        id: true,
-        avatarUrl: true,
-      },
     });
 
     if (!usersToMigrate.length) {
@@ -115,7 +109,6 @@ export class AwsStartupMigrationService {
       try {
         if (!user.avatarUrl) continue;
 
-        // Baixa a imagem a partir da URL (Node 18+ já tem fetch global)
         const response = await fetch(user.avatarUrl);
 
         if (!response.ok) {
