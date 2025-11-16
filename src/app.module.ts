@@ -8,6 +8,7 @@ import { JwtAuthGuard } from './auths/guards/jwt-auth.guards';
 import { PostsModule } from './posts/posts.module';
 import { LikesModule } from './likes/likes.module';
 import { CommentsModule } from './comments/comments.module';
+import { AwsUploadModule } from 'src/aws/aws.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { CommentsModule } from './comments/comments.module';
     PostsModule,
     LikesModule,
     CommentsModule,
+    AwsUploadModule,
   ],
   controllers: [],
   providers: [
@@ -27,4 +29,4 @@ import { CommentsModule } from './comments/comments.module';
     },
   ],
 })
-export class AppModule { }
+export class AppModule {}
