@@ -48,11 +48,7 @@ export class AwsStartupMigrationService {
       try {
         if (!post.imageUrl) continue;
 
-        const relativePath = post.imageUrl.startsWith('/')
-          ? post.imageUrl.slice(1)
-          : post.imageUrl;
-
-        const absolutePath = path.resolve(relativePath);
+        const absolutePath = path.resolve(post.imageUrl);
 
         const buffer = await fs.readFile(absolutePath);
 
