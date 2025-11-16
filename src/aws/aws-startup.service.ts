@@ -48,17 +48,13 @@ export class AwsStartupMigrationService {
       try {
         if (!post.imageUrl) continue;
 
-        const relativePath = post.imageUrl;
-
-        const absolutePath = path.resolve(relativePath);
-
-        const buffer = await fs.readFile(absolutePath);
+        const buffer = await fs.readFile(post.imageUrl);
 
         const mimeType =
-          lookupMime(absolutePath) ||
+          lookupMime(post.imageUrl) ||
           (post.isVideo ? 'video/mp4' : 'image/jpeg');
 
-        const fileName = path.basename(relativePath);
+        const fileName = path.basename(post.imageUrl);
         const folder = post.isVideo ? 'posts/videos' : 'posts/images';
 
         const { url } = await this.awsUploadService.uploadFile({
@@ -89,7 +85,6 @@ export class AwsStartupMigrationService {
       where: {
         avatarUrl: {
           not: null,
-          startsWith: 'http',
         },
       },
     });
@@ -121,7 +116,6 @@ export class AwsStartupMigrationService {
         const arrayBuffer = await response.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
-        // Tenta pegar o mime type do header ou inferir pelo nome do arquivo
         const contentType = response.headers.get('content-type') ?? undefined;
         const urlObj = new URL(user.avatarUrl);
         const rawFileName = path.basename(urlObj.pathname) || user.id;
@@ -132,7 +126,6 @@ export class AwsStartupMigrationService {
         const ext = path.extname(fileName);
 
         if (!ext) {
-          // Se não tiver extensão, tenta derivar do mime (ex: image/png -> .png)
           const mimeParts = String(mimeType).split('/');
           const guessedExt = mimeParts.length === 2 ? mimeParts[1] : 'jpg';
           fileName = `${fileName}.${guessedExt}`;
