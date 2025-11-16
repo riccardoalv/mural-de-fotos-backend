@@ -37,7 +37,7 @@ import { SearchPostsSchema } from './dto/search-posts.dto';
 @Controller('posts')
 @ApiBearerAuth('JWT-auth')
 export class PostsController {
-  constructor(private readonly postsService: PostsService) { }
+  constructor(private readonly postsService: PostsService) {}
 
   @Post()
   @ApiOperation({
@@ -178,21 +178,6 @@ export class PostsController {
   @ApiResponse({ status: 404, description: 'Post não encontrado' })
   async remove(@Param('id') id: string) {
     return this.postsService.removePost(id);
-  }
-
-  @Get('download/:postId')
-  @Public()
-  @ApiOperation({ summary: 'Faz o download da imagem de um post' })
-  @ApiResponse({ status: 200, description: 'Imagem enviada com sucesso' })
-  @ApiResponse({ status: 404, description: 'Imagem não encontrada' })
-  async getImage(@Param('postId') postId: string, @Res() res) {
-    const post = await this.postsService.findOne(postId);
-
-    if (!fs.existsSync(post.imageUrl)) {
-      throw new NotFoundException('Imagem não encontrada');
-    }
-
-    res.sendFile(post.imageUrl);
   }
 
   @Public()
