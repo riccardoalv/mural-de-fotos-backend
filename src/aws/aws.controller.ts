@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Body,
   Controller,
+  Get,
   Post,
   UploadedFile,
   UseInterceptors,
@@ -17,12 +18,16 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { AwsUploadService } from 'src/aws/aws.service';
+import { AwsStartupMigrationService } from 'src/aws/aws-startup.service';
 
 @ApiTags('AWS')
 @Controller('upload')
 @ApiBearerAuth('JWT-auth')
 export class AwsController {
-  constructor(private readonly aws: AwsUploadService) {}
+  constructor(
+    private readonly aws: AwsUploadService,
+    private readonly migrate: AwsStartupMigrationService,
+  ) {}
 
   @Post()
   @ApiOperation({
@@ -75,5 +80,10 @@ export class AwsController {
       mimeType: file.mimetype,
       folder,
     });
+  }
+
+  @Get('migrate')
+  async migrateendpoint() {
+    await this.migrate.run();
   }
 }

@@ -1,5 +1,4 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { OnModuleInit } from '@nestjs/common';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { lookup as lookupMime } from 'mime-types';
@@ -9,7 +8,7 @@ import { AwsUploadService } from 'src/aws/aws.service';
 const LEGACY_IMAGE_DIR = 'uploads';
 
 @Injectable()
-export class AwsStartupMigrationService implements OnModuleInit {
+export class AwsStartupMigrationService {
   private readonly logger = new Logger(AwsStartupMigrationService.name);
 
   constructor(
@@ -17,7 +16,7 @@ export class AwsStartupMigrationService implements OnModuleInit {
     private readonly awsUploadService: AwsUploadService,
   ) {}
 
-  async onModuleInit(): Promise<void> {
+  async run(): Promise<void> {
     this.logger.log('Iniciando migrações de imagens legadas para S3...');
 
     await this.migratePostImagesToS3();

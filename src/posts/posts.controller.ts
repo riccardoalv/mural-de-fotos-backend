@@ -11,7 +11,6 @@ import {
   Query,
   UseInterceptors,
   UploadedFile,
-  Res,
   BadRequestException,
 } from '@nestjs/common';
 import {
@@ -30,7 +29,6 @@ import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { GetPostDto } from './dto/get-post.dto';
 import { Public } from 'src/common/decorators/public-endpoint.decorator';
-import * as fs from 'fs';
 import { SearchPostsSchema } from './dto/search-posts.dto';
 
 @ApiTags('Posts')
