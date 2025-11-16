@@ -13,10 +13,13 @@ import { AuthsController } from './auths.controller';
     PassportModule,
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'secret',
+      signOptions: {
+        expiresIn: '100y',
+      },
     }),
     UsersModule,
   ],
   providers: [AuthService, LocalStrategy, JwtStrategy, JwtModule, UsersService],
   controllers: [AuthsController],
 })
-export class AuthModule { }
+export class AuthModule {}
