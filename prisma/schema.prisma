@@ -21,27 +21,42 @@ model User {
   resetPasswordCode       String?   @unique
   resetPasswordCodeExpiry DateTime?
 
-  posts     Post[]
-  comments  Comment[]
-  likes     Like[]
+  posts    Post[]
+  comments Comment[]
+  likes    Like[]
 }
 
 model Post {
   id        String   @id @default(uuid())
   caption   String?
-  imageUrl  String
+
   public    Boolean  @default(false)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  isVideo   Boolean  @default(false)
 
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  comments  Comment[]
-  likes     Like[]
+  comments Comment[]
+  likes    Like[]
 
-  tags      Json?
+  Media Media[]
+}
+
+model Media {
+  id String @id @default(uuid())
+
+  order Int @default(1)
+
+  imageUrl String
+  isVideo  Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
 }
 
 model Comment {
@@ -50,11 +65,11 @@ model Comment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  postId    String
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
 }
 
 model Like {
@@ -62,12 +77,11 @@ model Like {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  postId    String
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@unique([userId, postId], name: "userId_postId")
 }
-

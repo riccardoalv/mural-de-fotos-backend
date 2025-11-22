@@ -3,11 +3,10 @@ import { createZodDto } from 'nestjs-zod';
 
 export const CreatePostSchema = z.object({
   caption: z.string().optional().describe('Legenda opcional do post'),
-  imageUrl: z.string().describe('URL da imagem do post'),
-  public: z
-    .string()
-    .transform((val) => val.toLowerCase() === 'true')
+  public: z.coerce
+    .boolean()
+    .default(false)
     .describe('Define se o post é público'),
 });
 
-export class CreatePostDto extends createZodDto(CreatePostSchema) { }
+export class CreatePostDto extends createZodDto(CreatePostSchema) {}

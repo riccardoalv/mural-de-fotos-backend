@@ -10,8 +10,7 @@ import {
   Req,
   Query,
   UseInterceptors,
-  UploadedFile,
-  BadRequestException,
+  UploadedFiles,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -22,14 +21,13 @@ import {
   ApiBody,
   ApiQuery,
 } from '@nestjs/swagger';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { PostsService } from './posts.service';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { GetPostDto } from './dto/get-post.dto';
 import { Public } from 'src/common/decorators/public-endpoint.decorator';
-import { SearchPostsSchema } from './dto/search-posts.dto';
 
 @ApiTags('Posts')
 @Controller('posts')
@@ -39,11 +37,11 @@ export class PostsController {
 
   @Post()
   @ApiOperation({
-    summary: 'Cria um novo post com upload de imagem',
+    summary: 'Cria um novo post com upload de múltiplas mídias',
     operationId: 'createPost',
   })
   @UseInterceptors(
-    FileInterceptor('image', {
+    FilesInterceptor('media', 10, {
       storage: memoryStorage(),
     }),
   )
@@ -55,22 +53,19 @@ export class PostsController {
       properties: {
         caption: { type: 'string' },
         public: { type: 'boolean' },
-        image: { type: 'string', format: 'binary' },
+        media: {
+          type: 'array',
+          items: { type: 'string', format: 'binary' },
+        },
       },
     },
   })
-  @ApiResponse({
-    status: 201,
-    description: 'Post criado com sucesso',
-    type: GetPostDto,
-  })
-  @ApiResponse({ status: 400, description: 'Dados da requisição inválidos' })
   async create(
     @Req() req,
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFiles() files: Express.Multer.File[],
     @Body() createPostDto: CreatePostDto,
   ) {
-    return this.postsService.createPost(req.user.id, createPostDto, file);
+    return this.postsService.createPost(req.user.id, createPostDto, files);
   }
 
   @Public()
@@ -176,39 +171,5 @@ export class PostsController {
   @ApiResponse({ status: 404, description: 'Post não encontrado' })
   async remove(@Param('id') id: string) {
     return this.postsService.removePost(id);
-  }
-
-  @Public()
-  @Get('search')
-  @ApiOperation({
-    summary: 'Busca posts usando tags extraídas da imagem e do caption',
-    operationId: 'searchPostsByTags',
-  })
-  @ApiQuery({
-    name: 'term',
-    required: true,
-    type: String,
-    description: 'Termo de busca para procurar nos posts',
-  })
-  @ApiQuery({
-    name: 'page',
-    required: false,
-    type: Number,
-    description: 'Número da página (default 1)',
-  })
-  @ApiQuery({
-    name: 'limit',
-    required: false,
-    type: Number,
-    description: 'Limite de resultados por página (default 10)',
-  })
-  async searchPosts(@Req() req, @Query() rawQuery: any) {
-    const parsed = SearchPostsSchema.safeParse(rawQuery);
-    if (!parsed.success) {
-      throw new BadRequestException(parsed.error.format());
-    }
-
-    const isLogged = !!req.user;
-    return this.postsService.searchPosts(parsed.data, isLogged);
   }
 }

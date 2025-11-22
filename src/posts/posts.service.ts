@@ -9,7 +9,12 @@ import { UpdatePostDto } from './dto/update-post.dto';
 import { createPaginator } from 'prisma-pagination';
 import { Prisma, Post } from '@prisma/client';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { AwsUploadService } from 'src/aws/aws.service';
+import { AwsUploadService, UploadFileResult } from 'src/aws/aws.service';
+
+type UploadItem = {
+  isVideo: boolean;
+  uploadPromise: Promise<UploadFileResult>;
+};
 
 @Injectable()
 export class PostsService {
@@ -22,58 +27,86 @@ export class PostsService {
   async createPost(
     userId: string,
     createPostDto: CreatePostDto,
-    file: Express.Multer.File,
+    files: Express.Multer.File[],
   ) {
-    if (!file) {
-      throw new BadRequestException('Envie um arquivo válido');
+    if (!files || files.length === 0) {
+      throw new BadRequestException('Envie pelo menos um arquivo válido');
     }
-
-    const isImage = file.mimetype.startsWith('image/');
-    const isVideo = file.mimetype.startsWith('video/');
-
-    if (!isImage && !isVideo) {
-      throw new BadRequestException(
-        'O arquivo enviado deve ser uma imagem ou vídeo válido',
-      );
-    }
-
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
-    const fileExtension = file.originalname.split('.').pop();
-    const filename = `${uniqueSuffix}.${fileExtension}`;
-
-    const folder = isVideo ? 'posts/videos' : 'posts/images';
-
-    const { url } = await this.aws.uploadFile({
-      buffer: file.buffer,
-      fileName: filename,
-      mimeType: file.mimetype,
-      folder,
-    });
-
-    createPostDto.imageUrl = url;
 
     const parsed = CreatePostSchema.parse(createPostDto);
+
+    const uploads: UploadItem[] = [];
+
+    for (const file of files) {
+      if (!file) continue;
+
+      const isImage = file.mimetype.startsWith('image/');
+      const isVideo = file.mimetype.startsWith('video/');
+
+      if (!isImage && !isVideo) {
+        throw new BadRequestException(
+          'Todos os arquivos devem ser imagens ou vídeos válidos',
+        );
+      }
+
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+      const fileExtension = file.originalname.split('.').pop();
+      const filename = `${uniqueSuffix}.${fileExtension}`;
+
+      const folder = isVideo ? 'posts/videos' : 'posts/images';
+
+      const uploadPromise = this.aws.uploadFile({
+        buffer: file.buffer,
+        fileName: filename,
+        mimeType: file.mimetype,
+        folder,
+      });
+
+      uploads.push({
+        isVideo,
+        uploadPromise,
+      });
+    }
+
+    if (uploads.length === 0) {
+      throw new BadRequestException('Nenhum arquivo válido foi enviado');
+    }
 
     const post = await this.prisma.post.create({
       data: {
         ...parsed,
         userId,
-        isVideo,
       },
     });
+
+    const results = await Promise.all(uploads.map((u) => u.uploadPromise));
+
+    await this.prisma.$transaction(
+      results.map((result, index) =>
+        this.prisma.media.create({
+          data: {
+            postId: post.id,
+            imageUrl: result.url,
+            isVideo: uploads[index].isVideo,
+            order: index + 1,
+          },
+        }),
+      ),
+    );
 
     this.eventEmitter.emit('post.created', {
       ...post,
       caption: createPostDto.caption,
     });
 
-    return post;
+    return this.findOne(post.id);
   }
 
   async findOne(id: string) {
     const post = await this.prisma.post.findUnique({
       where: { id },
       include: {
+        Media: true,
         user: {
           select: {
             id: true,
@@ -126,6 +159,9 @@ export class PostsService {
           ...(!isLogged ? { public: true } : {}),
         },
         include: {
+          Media: {
+            where: { order: 1 },
+          },
           likes: true,
           user: {
             select: {
@@ -138,6 +174,7 @@ export class PostsService {
             select: {
               likes: true,
               comments: true,
+              Media: true,
             },
           },
         },
@@ -163,62 +200,5 @@ export class PostsService {
       where: { id },
     });
     return post;
-  }
-
-  async searchPosts(query: any, isLogged: boolean) {
-    const { term, page = 1, limit = 10 } = query;
-
-    if (!term?.trim())
-      return { data: [], meta: { total: 0, page, perPage: limit } };
-
-    const terms = term.toLowerCase().split(/\s+/).filter(Boolean);
-
-    if (terms.length === 0)
-      return { data: [], meta: { total: 0, page, perPage: limit } };
-
-    const whereClauses = Prisma.join(
-      terms.map((t) => Prisma.sql`LOWER(elem->>'label') LIKE ${'%' + t + '%'}`),
-      ' AND ',
-    );
-
-    const publicCondition = isLogged
-      ? Prisma.sql``
-      : Prisma.sql`AND p."public" = true`;
-
-    const offset = (page - 1) * limit;
-
-    const posts = await this.prisma.$queryRaw<any[]>(Prisma.sql`
-    SELECT p.*, 
-           MAX((elem->>'score')::float) AS relevance
-    FROM "Post" p,
-         jsonb_array_elements(p."tags") AS elem
-    WHERE ${whereClauses}
-    ${publicCondition}
-    GROUP BY p.id
-    ORDER BY relevance DESC
-    LIMIT ${limit}
-    OFFSET ${offset}
-  `);
-
-    const totalResult = await this.prisma.$queryRaw<
-      { count: number }[]
-    >(Prisma.sql`
-    SELECT COUNT(DISTINCT p.id) AS count
-    FROM "Post" p,
-         jsonb_array_elements(p."tags") AS elem
-    WHERE ${whereClauses}
-    ${publicCondition}
-  `);
-
-    const total = totalResult?.[0]?.count ?? 0;
-
-    return {
-      data: posts,
-      meta: {
-        total,
-        page,
-        perPage: limit,
-      },
-    };
   }
 }

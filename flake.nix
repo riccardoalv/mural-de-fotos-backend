@@ -18,6 +18,18 @@
             openssl
             pkg-config
             pre-commit
+            cmake
+            pkgs.poetry
+            pkgs.python312Packages.pip
+            pkgs.python312
+            pkgs.pyright
+            pkgs.pre-commit
+            pkgs.commitizen
+            pkgs.postgresql
+            pkgs.git
+            pkgs.docker-compose
+            pkgs.ruff
+            pkgs.gettext
           ];
           shellHook = ''
             export PRISMA_SCHEMA_ENGINE_BINARY="${prisma-engines}/bin/schema-engine"
