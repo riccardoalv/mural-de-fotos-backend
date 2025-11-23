@@ -5,11 +5,11 @@ import { PrismaService } from 'src/databases/prisma/prisma.service';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { EmailListener } from 'src/notification/email.listener';
 import { EmailService } from 'src/notification/email.service';
-import { HttpModule } from '@nestjs/axios';
 import { AwsUploadModule } from 'src/aws/aws.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [EventEmitterModule.forRoot(), HttpModule, AwsUploadModule],
+  imports: [EventEmitterModule.forRoot(), AwsUploadModule, ConfigModule],
   controllers: [PostsController],
   providers: [PostsService, PrismaService, EmailListener, EmailService],
 })

@@ -27,6 +27,7 @@ import {
   ZodValidationPipe,
   ZodSerializationException,
 } from 'nestjs-zod';
+import { LabelingModule } from 'src/labeling/label.module';
 
 @Catch(HttpException)
 class HttpExceptionFilter extends BaseExceptionFilter {
@@ -55,6 +56,7 @@ class HttpExceptionFilter extends BaseExceptionFilter {
     LikesModule,
     CommentsModule,
     AwsUploadModule,
+    LabelingModule,
   ],
   controllers: [],
   providers: [

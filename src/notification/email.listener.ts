@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { EmailService } from './email.service';
-import { Comment, Post } from '@prisma/client';
+import { Comment, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/databases/prisma/prisma.service';
 
 @Injectable()
@@ -9,7 +9,7 @@ export class EmailListener {
   constructor(
     private readonly emailService: EmailService,
     private readonly prisma: PrismaService,
-  ) { }
+  ) {}
 
   @OnEvent('comment.created')
   async handleCommentCreatedEvent(payload: {
@@ -55,5 +55,21 @@ export class EmailListener {
     const { email, resetPasswordCode } = payload;
 
     await this.emailService.sendPasswordRecovery(email, resetPasswordCode);
+  }
+
+  @OnEvent('face.detected')
+  async handleFaceDetected(
+    entity: Prisma.EntityGetPayload<{
+      include: {
+        media: { include: { post: { include: { user: true } } } };
+        EntityCluster: { include: { user: true } };
+      };
+    }>,
+  ) {
+    const userEmail = entity.EntityCluster!.user!.email;
+    const user = entity.media.post.user;
+    const post = entity.media.post;
+    const media = entity.media;
+    await this.emailService.sendFaceDetected(userEmail, post, user, media);
   }
 }

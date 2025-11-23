@@ -121,10 +121,14 @@ export class UsersService {
     const orderByClause = { [orderBy]: order };
 
     const queryResult = await paginate<any, any>(this.prisma.user, {
+      where: {
+        name: { contains: query.name, mode: 'insensitive' },
+      },
       select: {
         id: true,
         name: true,
         email: true,
+        avatarUrl: true,
       },
       orderBy: orderByClause,
     });

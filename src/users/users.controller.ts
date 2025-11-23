@@ -33,7 +33,7 @@ import { ResetPasswordDto } from './dto/reset-password.dto';
 @Controller('users')
 @ApiBearerAuth('JWT-auth')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) { }
+  constructor(private readonly usersService: UsersService) {}
 
   @Post()
   @Public()
@@ -87,6 +87,12 @@ export class UsersController {
     description: 'Limit per page',
   })
   @ApiQuery({
+    name: 'name',
+    required: false,
+    type: String,
+    description: 'Filter by name',
+  })
+  @ApiQuery({
     name: 'orderBy',
     required: false,
     enum: ['createdAt', 'name', 'email'],
@@ -104,6 +110,7 @@ export class UsersController {
       limit: Number(rawQuery.limit) || 10,
       orderBy: rawQuery.orderBy || 'createdAt',
       order: rawQuery.order || 'desc',
+      name: rawQuery.name,
     };
 
     return this.usersService.findAll(query);

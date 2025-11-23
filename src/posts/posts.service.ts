@@ -72,34 +72,31 @@ export class PostsService {
       throw new BadRequestException('Nenhum arquivo válido foi enviado');
     }
 
+    const results = await Promise.all(uploads.map((u) => u.uploadPromise));
+
     const post = await this.prisma.post.create({
       data: {
         ...parsed,
         userId,
-      },
-    });
-
-    const results = await Promise.all(uploads.map((u) => u.uploadPromise));
-
-    await this.prisma.$transaction(
-      results.map((result, index) =>
-        this.prisma.media.create({
-          data: {
-            postId: post.id,
+        Media: {
+          create: results.map((result, index) => ({
             imageUrl: result.url,
             isVideo: uploads[index].isVideo,
             order: index + 1,
-          },
-        }),
-      ),
-    );
+          })),
+        },
+      },
+      include: {
+        Media: true,
+      },
+    });
 
     this.eventEmitter.emit('post.created', {
       ...post,
       caption: createPostDto.caption,
     });
 
-    return this.findOne(post.id);
+    return post;
   }
 
   async findOne(id: string) {
@@ -200,5 +197,16 @@ export class PostsService {
       where: { id },
     });
     return post;
+  }
+
+  async label(userId: string, entityId: string) {
+    return await this.prisma.entity.update({
+      where: {
+        id: entityId,
+      },
+      data: {
+        userId: userId,
+      },
+    });
   }
 }

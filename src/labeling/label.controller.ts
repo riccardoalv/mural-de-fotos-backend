@@ -1,0 +1,143 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Param,
+  Query,
+  Body,
+  ParseArrayPipe,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiQuery,
+  ApiParam,
+  ApiPropertyOptional,
+} from '@nestjs/swagger';
+import { Public } from 'src/common/decorators/public-endpoint.decorator';
+import { LabelingService } from 'src/labeling/label.service';
+
+export class LabelEntityDto {
+  @ApiPropertyOptional({
+    description: 'Nome/label a ser atribuído',
+    example: 'car',
+  })
+  name?: string;
+}
+
+@ApiTags('Labeling')
+@Public()
+@Controller('labeling')
+@ApiBearerAuth('JWT-auth')
+export class LabelingController {
+  constructor(private readonly labelingService: LabelingService) {}
+
+  @Post(':userId/label')
+  @ApiOperation({
+    summary: 'Rotula entidades (detecções) com o usuário informado',
+    operationId: 'labelEntity',
+  })
+  @ApiQuery({
+    name: 'entityId',
+    description: 'ID(s) da(s) entidade(s) a ser(em) rotulada(s)',
+    type: String,
+    isArray: true,
+    required: false,
+  })
+  @ApiQuery({
+    name: 'clusterId',
+    description: 'ID do cluster de entidades a ser rotulado',
+    type: String,
+    required: false,
+  })
+  @ApiParam({
+    name: 'userId',
+    description: 'ID do usuário que está rotulando',
+    type: String,
+  })
+  async label(
+    @Param('userId') userId: string,
+    @Query(
+      'entityId',
+      new ParseArrayPipe({ items: String, separator: ',', optional: true }),
+    )
+    entityIds?: string[],
+    @Query('clusterId') clusterId?: string,
+    @Body() body?: LabelEntityDto,
+  ) {
+    return this.labelingService.label({
+      userId,
+      entityIds,
+      clusterId,
+      name: body?.name,
+    });
+  }
+
+  @Get()
+  @ApiOperation({
+    summary:
+      'Lista entities (detecções) com paginação e filtros (autenticado ou não)',
+    operationId: 'listAllLabelingEntities',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Número da página (default: 1)',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Limite por página (default: 10)',
+  })
+  @ApiQuery({
+    name: 'userId',
+    required: false,
+    type: String,
+    description: 'Filtrar por userId (ex: só rotuladas por tal usuário)',
+  })
+  @ApiQuery({
+    name: 'orderBy',
+    required: false,
+    type: String,
+    description: 'Campo de ordenação (default: createdAt)',
+  })
+  @ApiQuery({
+    name: 'order',
+    required: false,
+    type: String,
+    description: 'Direção da ordenação: asc | desc (default: desc)',
+  })
+  @ApiQuery({
+    name: 'alreadyClassified',
+    required: false,
+    type: Boolean,
+    description: 'Já foi classificada? true | false',
+  })
+  async findAll(@Query() rawQuery: any) {
+    const page = Number(rawQuery.page) || 1;
+    const limit = Number(rawQuery.limit) || 10;
+
+    let alreadyClassified: boolean | undefined = undefined;
+    if (rawQuery.alreadyClassified !== undefined) {
+      const value = String(rawQuery.alreadyClassified).toLowerCase();
+
+      if (value === 'true' || value === '1') {
+        alreadyClassified = true;
+      } else if (value === 'false' || value === '0') {
+        alreadyClassified = false;
+      }
+    }
+
+    return this.labelingService.findAll({
+      page,
+      perPage: limit,
+      userId: rawQuery.userId || undefined,
+      orderBy: rawQuery.orderBy || 'createdAt',
+      order: (rawQuery.order as 'asc' | 'desc') || 'desc',
+      alreadyClassified,
+    });
+  }
+}

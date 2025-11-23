@@ -3,7 +3,8 @@ import * as ejs from 'ejs';
 import { Resend } from 'resend';
 import { emailTemplate } from './templates/comment-notification-email.template';
 import { passwordRecoveryTemplate } from './templates/password-recovery-email.template';
-import { Comment, User } from '@prisma/client';
+import { Comment, User, Post, Media } from '@prisma/client';
+import { photoTagTemplate } from './templates/face-detected-email.template';
 
 @Injectable()
 export class EmailService {
@@ -35,6 +36,21 @@ export class EmailService {
       from: 'Mural de Fotos <noreply@mural.earthdoor.cc>',
       to: email,
       subject: 'Recuperação de senha',
+      html,
+    });
+  }
+
+  async sendFaceDetected(email: string, post: Post, user: User, media: Media) {
+    const html = await ejs.render(photoTagTemplate, {
+      post,
+      user,
+      media,
+    });
+
+    return this.resend.emails.send({
+      from: 'Mural de Fotos <noreply@mural.earthdoor.cc>',
+      to: email,
+      subject: 'Você apareceu em uma nova foto',
       html,
     });
   }
