@@ -1,4 +1,4 @@
-CREATE EXTENSION IF NOT EXISTS vector;
+CREATE EXTENSION vector;
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -37,6 +37,7 @@ CREATE TABLE "Media" (
     "isVideo" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
+    "isProcessed" BOOLEAN NOT NULL DEFAULT false,
     "postId" TEXT NOT NULL,
 
     CONSTRAINT "Media_pkey" PRIMARY KEY ("id")
@@ -54,9 +55,9 @@ CREATE TABLE "Entity" (
     "isAboveThreshold" BOOLEAN NOT NULL DEFAULT false,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
-    "userId" TEXT,
     "mediaId" TEXT NOT NULL,
-    "entityClusterId" TEXT,
+    "clusterId" TEXT,
+    "userId" TEXT,
 
     CONSTRAINT "Entity_pkey" PRIMARY KEY ("id")
 );
@@ -66,7 +67,7 @@ CREATE TABLE "EntityCluster" (
     "id" TEXT NOT NULL,
     "name" TEXT,
     "description" TEXT,
-    "centroidEmbedding" vector NOT NULL,
+    "centroidEmbedding" vector,
     "threshold" DOUBLE PRECISION NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -108,9 +109,6 @@ CREATE UNIQUE INDEX "User_cpf_key" ON "User"("cpf");
 CREATE UNIQUE INDEX "User_resetPasswordCode_key" ON "User"("resetPasswordCode");
 
 -- CreateIndex
-CREATE INDEX "Entity_userId_idx" ON "Entity"("userId");
-
--- CreateIndex
 CREATE INDEX "Entity_mediaId_idx" ON "Entity"("mediaId");
 
 -- CreateIndex
@@ -138,13 +136,13 @@ ALTER TABLE "Post" ADD CONSTRAINT "Post_userId_fkey" FOREIGN KEY ("userId") REFE
 ALTER TABLE "Media" ADD CONSTRAINT "Media_postId_fkey" FOREIGN KEY ("postId") REFERENCES "Post"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Entity" ADD CONSTRAINT "Entity_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
 ALTER TABLE "Entity" ADD CONSTRAINT "Entity_mediaId_fkey" FOREIGN KEY ("mediaId") REFERENCES "Media"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Entity" ADD CONSTRAINT "Entity_entityClusterId_fkey" FOREIGN KEY ("entityClusterId") REFERENCES "EntityCluster"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Entity" ADD CONSTRAINT "Entity_clusterId_fkey" FOREIGN KEY ("clusterId") REFERENCES "EntityCluster"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "Entity" ADD CONSTRAINT "Entity_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "EntityCluster" ADD CONSTRAINT "EntityCluster_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
