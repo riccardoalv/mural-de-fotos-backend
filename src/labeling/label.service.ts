@@ -57,28 +57,7 @@ export class LabelingService {
   }
 
   async label(input: LabelEntitiesInput) {
-    const { entityIds, clusterId, userId, name } = input;
-
-    const hasEntityIds = Array.isArray(entityIds) && entityIds.length > 0;
-    const hasClusterId = !!clusterId;
-
-    if (!hasEntityIds && !hasClusterId) {
-      throw new BadRequestException(
-        'Você deve informar pelo menos entityIds ou clusterId.',
-      );
-    }
-
-    if (hasEntityIds) {
-      return this.prisma.entity.updateMany({
-        where: {
-          id: { in: entityIds },
-        },
-        data: {
-          userId,
-          name,
-        },
-      });
-    }
+    const { clusterId, userId, name } = input;
 
     const cluster = await this.prisma.entityCluster.findUnique({
       where: { id: clusterId },

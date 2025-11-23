@@ -45,7 +45,7 @@ export class PostCreatedListener {
 
   async processMedia(media: Media) {
     this.logger.log(`Processing media: ${JSON.stringify(media, null, 2)}`);
-    const THRESHOLD = 0.6;
+    const THRESHOLD = 0.45;
 
     if (media.isVideo) {
       return;

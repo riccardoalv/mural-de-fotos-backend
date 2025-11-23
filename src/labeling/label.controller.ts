@@ -24,6 +24,12 @@ export class LabelEntityDto {
     example: 'car',
   })
   name?: string;
+
+  @ApiPropertyOptional({
+    description: 'userId a ser atribuído',
+    example: 'car',
+  })
+  userId?: string;
 }
 
 @ApiTags('Labeling')
@@ -33,7 +39,7 @@ export class LabelEntityDto {
 export class LabelingController {
   constructor(private readonly labelingService: LabelingService) {}
 
-  @Post(':userId/label')
+  @Post('/label')
   @ApiOperation({
     summary: 'Rotula entidades (detecções) com o usuário informado',
     operationId: 'labelEntity',
@@ -57,7 +63,6 @@ export class LabelingController {
     type: String,
   })
   async label(
-    @Param('userId') userId: string,
     @Query(
       'entityId',
       new ParseArrayPipe({ items: String, separator: ',', optional: true }),
@@ -67,7 +72,7 @@ export class LabelingController {
     @Body() body?: LabelEntityDto,
   ) {
     return this.labelingService.label({
-      userId,
+      userId: body?.userId,
       entityIds,
       clusterId,
       name: body?.name,
