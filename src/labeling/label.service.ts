@@ -59,34 +59,64 @@ export class LabelingService {
   async label(input: LabelEntitiesInput) {
     const { clusterId, userId, name } = input;
 
-    const cluster = await this.prisma.entityCluster.findUnique({
-      where: { id: clusterId },
-      include: { entities: { select: { id: true } } },
-    });
+    return this.prisma.$transaction(async (tx) => {
+      const cluster = await tx.entityCluster.findUnique({
+        where: { id: clusterId },
+        include: { entities: { select: { id: true } } },
+      });
 
-    if (!cluster) {
-      throw new NotFoundException('clusterId não encontrado.');
-    }
+      if (!cluster) {
+        throw new NotFoundException('clusterId não encontrado.');
+      }
 
-    const ids = cluster.entities.map((e) => e.id);
-
-    const [, updatedCluster] = await this.prisma.$transaction([
-      this.prisma.entity.updateMany({
-        where: { id: { in: ids } },
-        data: {
+      const existingCluster = await tx.entityCluster.findFirst({
+        where: {
           userId,
-          name,
+          id: { not: clusterId },
         },
-      }),
-      this.prisma.entityCluster.update({
+        include: { entities: { select: { id: true } } },
+      });
+
+      if (existingCluster) {
+        const otherEntityIds = existingCluster.entities.map((e) => e.id);
+
+        if (otherEntityIds.length > 0) {
+          await tx.entity.updateMany({
+            where: { id: { in: otherEntityIds } },
+            data: {
+              clusterId,
+              userId,
+              name,
+            },
+          });
+        }
+
+        await tx.entityCluster.delete({
+          where: { id: existingCluster.id },
+        });
+      }
+
+      const currentEntityIds = cluster.entities.map((e) => e.id);
+
+      if (currentEntityIds.length > 0) {
+        await tx.entity.updateMany({
+          where: { id: { in: currentEntityIds } },
+          data: {
+            userId,
+            name,
+          },
+        });
+      }
+
+      const updatedCluster = await tx.entityCluster.update({
         where: { id: clusterId },
         data: {
           userId,
           name,
         },
-      }),
-    ]);
+      });
 
-    return updatedCluster;
+      return updatedCluster;
+    });
   }
 }
