@@ -119,4 +119,38 @@ export class LabelingService {
       return updatedCluster;
     });
   }
+
+  async addEntityOnCluster(entityId: string, clusterId: string) {
+    const entity = await this.prisma.entity.findUnique({
+      where: { id: entityId },
+    });
+
+    if (!entity) {
+      throw new NotFoundException('entity not found');
+    }
+
+    return await this.prisma.entity.update({
+      where: { id: entityId },
+      data: {
+        clusterId: clusterId,
+      },
+    });
+  }
+
+  async removeEntityFromCluster(entityId: string) {
+    const entity = await this.prisma.entity.findUnique({
+      where: { id: entityId },
+    });
+
+    if (!entity) {
+      throw new NotFoundException('entity not found');
+    }
+
+    return await this.prisma.entity.update({
+      where: { id: entityId },
+      data: {
+        clusterId: null,
+      },
+    });
+  }
 }

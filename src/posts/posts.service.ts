@@ -148,13 +148,28 @@ export class PostsService {
           ? { comments: { _count: order } }
           : { [orderBy]: order };
 
+    const where: Prisma.PostWhereInput = {
+      ...(!isLogged ? { public: true } : {}),
+
+      ...(userId && {
+        Media: {
+          some: {
+            entities: {
+              some: {
+                EntityCluster: {
+                  userId: userId,
+                },
+              },
+            },
+          },
+        },
+      }),
+    };
+
     const queryResult = await paginate<Post[], Prisma.PostFindManyArgs>(
       this.prisma.post,
       {
-        where: {
-          ...(userId ? { userId } : {}),
-          ...(!isLogged ? { public: true } : {}),
-        },
+        where,
         include: {
           Media: {
             where: { order: 1 },

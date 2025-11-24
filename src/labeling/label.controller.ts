@@ -6,6 +6,7 @@ import {
   Query,
   Body,
   ParseArrayPipe,
+  Delete,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -144,5 +145,41 @@ export class LabelingController {
       order: (rawQuery.order as 'asc' | 'desc') || 'desc',
       alreadyClassified,
     });
+  }
+
+  @Post('entity/:entityId/cluster/:clusterId')
+  @ApiOperation({
+    summary: 'Adiciona uma entidade a um cluster',
+    operationId: 'addEntityOnCluster',
+  })
+  @ApiParam({
+    name: 'entityId',
+    description: 'ID da entidade a ser vinculada ao cluster',
+    type: String,
+  })
+  @ApiParam({
+    name: 'clusterId',
+    description: 'ID do cluster',
+    type: String,
+  })
+  async addEntityOnCluster(
+    @Param('entityId') entityId: string,
+    @Param('clusterId') clusterId: string,
+  ) {
+    return this.labelingService.addEntityOnCluster(entityId, clusterId);
+  }
+
+  @Delete('entity/:entityId/cluster')
+  @ApiOperation({
+    summary: 'Remove uma entidade do cluster associado',
+    operationId: 'removeEntityFromCluster',
+  })
+  @ApiParam({
+    name: 'entityId',
+    description: 'ID da entidade a ser removida do cluster',
+    type: String,
+  })
+  async removeEntityFromCluster(@Param('entityId') entityId: string) {
+    return this.labelingService.removeEntityFromCluster(entityId);
   }
 }
