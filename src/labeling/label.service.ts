@@ -58,6 +58,7 @@ export class LabelingService {
 
   async label(input: LabelEntitiesInput) {
     const { clusterId, userId, name } = input;
+    console.log(input);
 
     return this.prisma.$transaction(async (tx) => {
       const cluster = await tx.entityCluster.findUnique({
