@@ -146,11 +146,30 @@ export class LabelingService {
       throw new NotFoundException('entity not found');
     }
 
-    return await this.prisma.entity.update({
+    const result = await this.prisma.entity.update({
       where: { id: entityId },
       data: {
         clusterId: null,
       },
     });
+
+    const cluster = await this.prisma.entityCluster.findUnique({
+      where: {
+        id: entity.clusterId!,
+      },
+      include: {
+        _count: {
+          select: {
+            entities: true,
+          },
+        },
+      },
+    });
+
+    if (cluster?._count.entities === 0) {
+      await this.prisma.entityCluster.delete({ where: { id: cluster.id } });
+    }
+
+    return result;
   }
 }
