@@ -21,6 +21,6 @@ import { LabelingService } from 'src/labeling/label.service';
     }),
   ],
   controllers: [LabelingController],
-  providers: [LabelingService, PostCreatedListener],
+  providers: [LabelingService, PostCreatedListener, LabelStartup],
 })
 export class LabelingModule {}

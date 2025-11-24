@@ -60,6 +60,9 @@ export class LabelingService {
     const { clusterId, userId, name } = input;
     console.log(input);
 
+    let user = userId;
+    if (name) user = undefined;
+
     return this.prisma.$transaction(async (tx) => {
       const cluster = await tx.entityCluster.findUnique({
         where: { id: clusterId },
@@ -70,31 +73,32 @@ export class LabelingService {
         throw new NotFoundException('clusterId não encontrado.');
       }
 
-      const existingCluster = await tx.entityCluster.findFirst({
-        where: {
-          userId,
-          id: { not: clusterId },
-        },
-        include: { entities: { select: { id: true } } },
-      });
+      if (!name) {
+        const existingCluster = await tx.entityCluster.findFirst({
+          where: {
+            userId: user,
+            id: { not: clusterId },
+          },
+          include: { entities: { select: { id: true } } },
+        });
 
-      if (existingCluster) {
-        const otherEntityIds = existingCluster.entities.map((e) => e.id);
+        if (existingCluster) {
+          const otherEntityIds = existingCluster.entities.map((e) => e.id);
 
-        if (otherEntityIds.length > 0) {
-          await tx.entity.updateMany({
-            where: { id: { in: otherEntityIds } },
-            data: {
-              clusterId,
-              userId,
-              name,
-            },
+          if (otherEntityIds.length > 0) {
+            await tx.entity.updateMany({
+              where: { id: { in: otherEntityIds } },
+              data: {
+                clusterId,
+                userId: user,
+                name,
+              },
+            });
+          }
+          await tx.entityCluster.delete({
+            where: { id: existingCluster.id },
           });
         }
-
-        await tx.entityCluster.delete({
-          where: { id: existingCluster.id },
-        });
       }
 
       const currentEntityIds = cluster.entities.map((e) => e.id);
@@ -103,7 +107,7 @@ export class LabelingService {
         await tx.entity.updateMany({
           where: { id: { in: currentEntityIds } },
           data: {
-            userId,
+            userId: user,
             name,
           },
         });
@@ -112,7 +116,7 @@ export class LabelingService {
       const updatedCluster = await tx.entityCluster.update({
         where: { id: clusterId },
         data: {
-          userId,
+          userId: user,
           name,
         },
       });
