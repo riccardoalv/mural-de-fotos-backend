@@ -15,6 +15,7 @@ model User {
   password  String
   avatarUrl String?
   bio       String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -26,43 +27,51 @@ model User {
   likes         Like[]
   entity        Entity[]
   EntityCluster EntityCluster[]
+
+  @@index([name])
+  @@index([createdAt])
 }
 
 model Post {
-  id      String  @id @default(uuid())
+  id      String   @id @default(uuid())
   caption String?
 
-  public Boolean @default(false)
+  public Boolean   @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   userId String
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   comments Comment[]
   likes    Like[]
+  Media    Media[]
 
-  Media Media[]
+  @@index([userId])
+  @@index([createdAt])
+  @@index([public])
 }
 
 model Media {
   id String @id @default(uuid())
 
-  order Int @default(1)
-
+  order    Int    @default(1)
   imageUrl String
   isVideo  Boolean @default(false)
+
+  isProcessed Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  postId String
+  post   Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   entities Entity[]
 
-  isProcessed Boolean @default(false)
-
-  postId String
-  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  @@index([postId])
+  @@index([order])
+  @@index([createdAt])
 }
 
 model Entity {
@@ -73,8 +82,7 @@ model Entity {
 
   className  String
   confidence Float
-
-  embedding Unsupported("vector")?
+  embedding  Unsupported("vector")?
 
   name             String?
   isAboveThreshold Boolean @default(false)
@@ -82,16 +90,21 @@ model Entity {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  mediaId       String
-  media         Media          @relation(fields: [mediaId], references: [id], onDelete: Cascade)
-  EntityCluster EntityCluster? @relation(fields: [clusterId], references: [id])
+  mediaId   String
+  media     Media          @relation(fields: [mediaId], references: [id], onDelete: Cascade)
+
   clusterId     String?
-  User          User?          @relation(fields: [userId], references: [id])
-  userId        String?
+  EntityCluster EntityCluster? @relation(fields: [clusterId], references: [id])
+
+  userId   String?
+  User     User?           @relation(fields: [userId], references: [id])
 
   @@index([mediaId])
-  @@index([createdAt])
   @@index([className])
+  @@index([name])
+  @@index([clusterId])
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model EntityCluster {
@@ -108,13 +121,14 @@ model EntityCluster {
   updatedAt DateTime @updatedAt
 
   userId String?
-  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   entities Entity[]
 
   @@index([userId])
   @@index([createdAt])
   @@index([threshold])
+  @@index([name])
 }
 
 model Comment {
@@ -128,6 +142,10 @@ model Comment {
 
   postId String
   post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@index([userId])
+  @@index([createdAt])
 }
 
 model Like {
@@ -142,4 +160,6 @@ model Like {
   post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@unique([userId, postId], name: "userId_postId")
+  @@index([postId])
+  @@index([userId])
 }

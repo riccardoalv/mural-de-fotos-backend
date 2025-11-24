@@ -125,6 +125,12 @@ export class PostsController {
     enum: ['asc', 'desc'],
     description: 'Direção da ordenação',
   })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Faca uma busca',
+  })
   async findAll(@Req() req, @Query() rawQuery: any) {
     const query: any = {
       page: Number(rawQuery.page) || 1,
@@ -132,6 +138,7 @@ export class PostsController {
       userId: rawQuery.userId || undefined,
       orderBy: rawQuery.orderBy || 'createdAt',
       order: rawQuery.order || 'desc',
+      search: rawQuery.search,
     };
 
     const isLogged = !!req.user;

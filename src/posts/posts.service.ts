@@ -11,6 +11,139 @@ import { Prisma, Post } from '@prisma/client';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AwsUploadService, UploadFileResult } from 'src/aws/aws.service';
 
+function buildSearchWhere(raw: string): Prisma.PostWhereInput {
+  const term = raw.trim();
+  if (!term) return {};
+
+  const tokens = term.split(/\s+/);
+
+  const tokenConditions: Prisma.PostWhereInput[] = tokens.map((token) => ({
+    OR: [
+      {
+        caption: {
+          contains: token,
+          mode: 'insensitive',
+        },
+      },
+
+      {
+        user: {
+          name: {
+            contains: token,
+            mode: 'insensitive',
+          },
+        },
+      },
+      {
+        user: {
+          email: {
+            contains: token,
+            mode: 'insensitive',
+          },
+        },
+      },
+      {
+        user: {
+          cpf: {
+            contains: token,
+            mode: 'insensitive',
+          },
+        },
+      },
+      {
+        user: {
+          bio: {
+            contains: token,
+            mode: 'insensitive',
+          },
+        },
+      },
+
+      {
+        comments: {
+          some: {
+            content: {
+              contains: token,
+              mode: 'insensitive',
+            },
+          },
+        },
+      },
+
+      {
+        Media: {
+          some: {
+            imageUrl: {
+              contains: token,
+              mode: 'insensitive',
+            },
+          },
+        },
+      },
+
+      {
+        Media: {
+          some: {
+            entities: {
+              some: {
+                name: {
+                  contains: token,
+                  mode: 'insensitive',
+                },
+              },
+            },
+          },
+        },
+      },
+      {
+        Media: {
+          some: {
+            entities: {
+              some: {
+                className: {
+                  contains: token,
+                  mode: 'insensitive',
+                },
+              },
+            },
+          },
+        },
+      },
+
+      {
+        Media: {
+          some: {
+            entities: {
+              some: {
+                EntityCluster: {
+                  OR: [
+                    {
+                      name: {
+                        contains: token,
+                        mode: 'insensitive',
+                      },
+                    },
+                    {
+                      description: {
+                        contains: token,
+                        mode: 'insensitive',
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      },
+    ],
+  }));
+
+  return {
+    AND: tokenConditions,
+  };
+}
+
 type UploadItem = {
   isVideo: boolean;
   uploadPromise: Promise<UploadFileResult>;
@@ -137,6 +270,7 @@ export class PostsService {
       userId,
       orderBy = 'createdAt',
       order = 'desc',
+      search,
     } = query;
 
     const paginate = createPaginator({ page, perPage: limit });
@@ -148,23 +282,38 @@ export class PostsService {
           ? { comments: { _count: order } }
           : { [orderBy]: order };
 
-    const where: Prisma.PostWhereInput = {
-      ...(!isLogged ? { public: true } : {}),
+    const whereAnd: Prisma.PostWhereInput[] = [];
 
-      ...(userId && {
+    // Só públicos se não estiver logado
+    if (!isLogged) {
+      whereAnd.push({ public: true });
+    }
+
+    // Filtro por userId (já existia)
+    if (userId) {
+      whereAnd.push({
         Media: {
           some: {
             entities: {
               some: {
                 EntityCluster: {
-                  userId: userId,
+                  userId,
                 },
               },
             },
           },
         },
-      }),
-    };
+      });
+    }
+
+    // 🔍 Filtro de busca
+    if (search) {
+      whereAnd.push(buildSearchWhere(search));
+    }
+
+    const where: Prisma.PostWhereInput = whereAnd.length
+      ? { AND: whereAnd }
+      : {};
 
     const queryResult = await paginate<Post[], Prisma.PostFindManyArgs>(
       this.prisma.post,
