@@ -35,53 +35,6 @@ function buildSearchWhere(raw: string): Prisma.PostWhereInput {
         },
       },
       {
-        user: {
-          email: {
-            contains: token,
-            mode: 'insensitive',
-          },
-        },
-      },
-      {
-        user: {
-          cpf: {
-            contains: token,
-            mode: 'insensitive',
-          },
-        },
-      },
-      {
-        user: {
-          bio: {
-            contains: token,
-            mode: 'insensitive',
-          },
-        },
-      },
-
-      {
-        comments: {
-          some: {
-            content: {
-              contains: token,
-              mode: 'insensitive',
-            },
-          },
-        },
-      },
-
-      {
-        Media: {
-          some: {
-            imageUrl: {
-              contains: token,
-              mode: 'insensitive',
-            },
-          },
-        },
-      },
-
-      {
         Media: {
           some: {
             entities: {
@@ -109,7 +62,6 @@ function buildSearchWhere(raw: string): Prisma.PostWhereInput {
           },
         },
       },
-
       {
         Media: {
           some: {
@@ -119,12 +71,6 @@ function buildSearchWhere(raw: string): Prisma.PostWhereInput {
                   OR: [
                     {
                       name: {
-                        contains: token,
-                        mode: 'insensitive',
-                      },
-                    },
-                    {
-                      description: {
                         contains: token,
                         mode: 'insensitive',
                       },
