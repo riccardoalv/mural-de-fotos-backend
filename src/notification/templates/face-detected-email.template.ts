@@ -3,11 +3,12 @@ export const photoTagTemplate = `
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>Você apareceu em uma nova foto!</title>
+    <title>Aviso: Você foi marcado em uma foto!</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
       body {
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-        background-color: #fafafa;
+        background-color: #f8f8f8;
         margin: 0;
         padding: 0;
         color: #262626;
@@ -24,7 +25,18 @@ export const photoTagTemplate = `
       .header {
         padding: 20px;
         text-align: center;
-        border-bottom: 1px solid #efefef;
+        border-bottom: 2px solid #f2c14e;
+        background-color: #fff3cd;
+      }
+      .header h1 {
+        font-size: 24px;
+        margin: 0;
+        color: #856404;
+      }
+      .header p {
+        font-size: 14px;
+        color: #856404;
+        margin: 10px 0 0;
       }
       .header .user-info {
         display: flex;
@@ -52,78 +64,71 @@ export const photoTagTemplate = `
         font-weight: bold;
         font-size: 20px;
       }
-      .header h1 {
-        font-size: 20px;
-        margin: 0;
-        color: #262626;
-      }
-      .header p {
-        font-size: 14px;
-        color: #8e8e8e;
-        margin: 5px 0 0;
-      }
       .post-content img {
         width: 100%;
         display: block;
+        margin-top: 20px;
       }
       .cta {
         text-align: center;
-        padding: 15px 20px;
-        border-top: 1px solid #efefef;
+        padding: 20px;
+        background-color: #ffeeba;
+        border-top: 1px solid #f8e4b3;
       }
-      .btn {
+      .cta a {
         text-decoration: none;
-        background-color: #3897f0;
+        background-color: #f8a145;
         color: #fff;
-        padding: 10px 20px;
+        padding: 12px 24px;
         border-radius: 4px;
         font-weight: bold;
-        font-size: 14px;
+        font-size: 16px;
       }
       .footer {
-        background-color: #fafafa;
+        background-color: #f8f8f8;
         text-align: center;
         padding: 10px;
         font-size: 12px;
         color: #8e8e8e;
-        border-top: 1px solid #efefef;
+        border-top: 1px solid #f2c14e;
       }
     </style>
   </head>
   <body>
     <div class="container">
-      
       <!-- Cabeçalho -->
       <div class="header">
-        <div class="user-info">
-          <% if (user.avatarUrl) { %>
-            <img class="avatar" src="<%= user.avatarUrl %>" alt="Avatar de <%= user.name %>">
-          <% } else { %>
-            <div class="avatar-fallback">
-              <%= user.name.charAt(0).toUpperCase() %>
-            </div>
-          <% } %>
-          <h1><%= user.name %></h1>
-        </div>
-        <p><strong><%= user.name %></strong> postou uma foto em que você aparece! 📸</p>
+        <h1>Atenção! Você foi marcado em uma nova foto</h1>
+        <p>Alerta: alguém postou uma foto em que você aparece. Verifique imediatamente.</p>
+      </div>
+      
+      <!-- Informações do usuário -->
+      <div class="user-info">
+        <% if (user.avatarUrl) { %>
+          <img class="avatar" src="<%= user.avatarUrl %>" alt="Avatar de <%= user.name %>">
+        <% } else { %>
+          <div class="avatar-fallback">
+            <%= user.name.charAt(0).toUpperCase() %>
+          </div>
+        <% } %>
+        <h2><%= user.name %></h2>
       </div>
       
       <!-- Imagem -->
       <div class="post-content">
-        <img src="<%= media.imageUrl %>" alt="Foto do post">
+        <img src="<%= media.imageUrl %>" alt="Imagem marcada com você">
       </div>
       
       <!-- Call-to-Action -->
       <div class="cta">
-        <a class="btn" href="http://computacao.unir.br/mural/?post=<%= post.id %>">Ver Foto</a>
+        <a href="http://computacao.unir.br/mural/?post=<%= post.id %>">Ver Foto Agora</a>
       </div>
       
       <!-- Rodapé -->
       <div class="footer">
-        <p>Este email foi enviado automaticamente. Por favor, não responda.</p>
+        <p>Este email foi enviado automaticamente. Não responda a este endereço.</p>
         <p>Sua Equipe © <%= new Date().getFullYear() %></p>
       </div>
-
     </div>
   </body>
 </html>
