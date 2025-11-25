@@ -121,12 +121,13 @@ export const photoTagTemplate = `
       
       <!-- Call-to-Action -->
       <div class="cta">
-        <a href="http://computacao.unir.br/mural/?post=<%= post.id %>">Ver Foto Agora</a>
+        <a href="https://computacao.unir.br/mural/?post=<%= post.id %>">Ver Foto Agora</a>
       </div>
       
       <!-- Rodapé -->
       <div class="footer">
         <p>Este email foi enviado automaticamente. Não responda a este endereço.</p>
+        <p>Se você não deseja receber mais notificações, <a href="#">clique aqui para se descadastrar</a>.</p>
         <p>Sua Equipe © <%= new Date().getFullYear() %></p>
       </div>
     </div>
