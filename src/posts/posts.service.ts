@@ -237,19 +237,7 @@ export class PostsService {
 
     // Filtro por userId (já existia)
     if (userId) {
-      whereAnd.push({
-        Media: {
-          some: {
-            entities: {
-              some: {
-                EntityCluster: {
-                  userId,
-                },
-              },
-            },
-          },
-        },
-      });
+      whereAnd.push({ userId });
     }
 
     // 🔍 Filtro de busca
